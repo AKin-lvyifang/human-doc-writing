@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+
+# Personal profiles are local user data, not repository content.
+human-doc-writing/user/portrait-index.md
+human-doc-writing/user/portraits/*.md
+!human-doc-writing/user/portraits/README.md
+human-doc-writing/user/anti-patterns/*.md
+!human-doc-writing/user/anti-patterns/README.md
+human-doc-writing/user/history/*.md
+!human-doc-writing/user/history/README.md

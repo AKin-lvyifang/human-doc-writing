@@ -1,0 +1,4 @@
+interface:
+  display_name: "Human Doc Writing"
+  short_description: "渐进式画像与统一人味门禁的多场景中文写作 Skill"
+  default_prompt: "使用 $human-doc-writing 根据我的材料写一篇符合场景、保留个人偏好并通过人味终审的中文成稿。"
