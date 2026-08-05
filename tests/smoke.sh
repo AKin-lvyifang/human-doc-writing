@@ -31,9 +31,10 @@ HUMAN_DOC_ARCHIVE_URL="file://$archive_path" \
   bash "$repo_root/install.sh" --dest "$skills_root"
 
 test -f "$target/SKILL.md"
-test "$(tr -d '\r\n' < "$target/VERSION")" = "1.1.0"
+test "$(tr -d '\r\n' < "$target/VERSION")" = "1.2.0"
 test -f "$target/agents/openai.yaml"
 test -x "$target/scripts/lint_ai_style.py"
+test -x "$target/scripts/compare_draft_shapes.py"
 
 python3 "$target/scripts/lint_ai_style.py" \
   "$repo_root/tests/fixtures/wechat-plain-good.md" \
@@ -47,10 +48,66 @@ if bad_output="$(python3 "$target/scripts/lint_ai_style.py" \
 fi
 
 case "$bad_output" in
-  *"[公众号问号]"*"[表演性点题]"*) ;;
+  *"[公众号问号]"*"[表演性点题]"*"恰好"*"[表演性点题]"*"恰恰"*) ;;
   *)
     echo "WeChat negative fixture did not trigger the expected gates." >&2
     echo "$bad_output" >&2
+    exit 1
+    ;;
+esac
+
+manual_output="$(python3 "$target/scripts/lint_ai_style.py" \
+  "$repo_root/tests/fixtures/wechat-manual-bad.md" \
+  --profile wechat-longform 2>&1)"
+case "$manual_output" in
+  *"[说明书口吻]"*) ;;
+  *)
+    echo "Manual-tone fixture did not trigger the expected warning." >&2
+    echo "$manual_output" >&2
+    exit 1
+    ;;
+esac
+
+even_output="$(python3 "$target/scripts/lint_ai_style.py" \
+  "$repo_root/tests/fixtures/wechat-even-bad.md" \
+  --profile wechat-longform 2>&1)"
+case "$even_output" in
+  *"[段落过齐]"*) ;;
+  *)
+    echo "Even-paragraph fixture did not trigger the expected warning." >&2
+    echo "$even_output" >&2
+    exit 1
+    ;;
+esac
+
+if length_output="$(python3 "$target/scripts/lint_ai_style.py" \
+  "$repo_root/tests/fixtures/wechat-plain-good.md" \
+  --profile wechat-longform --min-han 1200 --strict 2>&1)"; then
+  echo "Minimum-length fixture unexpectedly passed." >&2
+  exit 1
+fi
+case "$length_output" in
+  *"[篇幅不足]"*) ;;
+  *)
+    echo "Minimum-length fixture did not trigger the expected gate." >&2
+    echo "$length_output" >&2
+    exit 1
+    ;;
+esac
+
+if batch_output="$(python3 "$target/scripts/compare_draft_shapes.py" \
+  "$repo_root/tests/fixtures/batch-shape-a.md" \
+  "$repo_root/tests/fixtures/batch-shape-b.md" \
+  "$repo_root/tests/fixtures/batch-shape-c.md" \
+  --strict 2>&1)"; then
+  echo "Batch-shape negative fixtures unexpectedly passed." >&2
+  exit 1
+fi
+case "$batch_output" in
+  *"[段落数同构]"*) ;;
+  *)
+    echo "Batch-shape fixtures did not trigger the expected gate." >&2
+    echo "$batch_output" >&2
     exit 1
     ;;
 esac

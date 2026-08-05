@@ -88,7 +88,6 @@ TRIPLE_PATTERN = re.compile(r"[\u4e00-\u9fff]{1,6}、[\u4e00-\u9fff]{1,6}、[\u4
 
 
 HARD_STOPS = (
-    "不丢",
     "说白了",
     "说穿了",
     "先说结论",
@@ -100,9 +99,7 @@ HARD_JARGON = (
     "抓手",
     "商业闭环",
     "价值闭环",
-    "闭环",
     "能力沉淀",
-    "打法",
     "拉通",
     "底层逻辑",
     "顶层设计",
@@ -114,7 +111,6 @@ HARD_JARGON = (
     "全链路",
     "组合拳",
     "打开想象空间",
-    "想象空间",
     "结构性机会",
     "关键命题",
     "深层逻辑",
@@ -140,6 +136,26 @@ CONTEXT_JARGON = (
     "范式",
     "方法论",
     "核心变量",
+    "打法",
+    "想象空间",
+    "闭环",
+    "不丢",
+)
+
+
+LYRIC_WORDS = (
+    "安放",
+    "抵达",
+    "微光",
+    "褶皱",
+    "丰盈",
+    "滚烫",
+    "轻盈",
+    "赤裸",
+    "剥开",
+    "锋利",
+    "坚硬",
+    "柔软",
 )
 
 
@@ -197,17 +213,63 @@ PIVOT_PATTERNS = (
     re.compile(r"(?:并)?不是[^。！？\n]{0,90}而是"),
     re.compile(r"并非[^。！？\n]{0,90}而是"),
     re.compile(r"不在于[^。！？\n]{0,90}而在于"),
-    re.compile(r"与其说[^。！？\n]{0,90}不如说"),
-    re.compile(r"不只(?:是)?[^。！？\n]{0,90}(?:还|也)"),
+    re.compile(r"与其说[^。！？\n]{0,90}(?:不如|毋宁|倒不如)"),
+    re.compile(r"[。！？!?]\s*而是"),
     re.compile(r"表面(?:上)?[^。！？\n]{0,90}(?:其实|实际|实则)"),
     re.compile(r"看似[^。！？\n]{0,90}(?:其实|实际|实则)"),
 )
 
 
+SEMANTIC_PIVOT_PATTERNS = (
+    re.compile(r"(?:总|一直|曾|都)?以为[^！？\n]{2,60}?(?:其实|才发现|才明白|才知道|后来才)"),
+    re.compile(r"(?:总|都|一直)以为[^！？\n]{2,60}?[。，](?:可|但|其实)"),
+    re.compile(r"回头(?:看|一看)?才(?:发现|明白|知道)"),
+    re.compile(r"(?:并)?不是[^。！？\n]{1,40}，(?:更|才)?是[^，。！？\n]"),
+    re.compile(r"从来(?:都)?(?:不是|与[^。！？，\n]{1,12}无关)"),
+    re.compile(r"答案(?:是否定的|恰恰相反)|恰恰相反"),
+    re.compile(r"表面(?:上)?[^！？\n]{0,60}。[^！？\n]{0,12}(?:其实|实际|实则)"),
+    re.compile(r"看似[^！？\n]{0,60}。[^！？\n]{0,12}(?:其实|实际|实则)"),
+    re.compile(r"[^，。！？\n]{1,12}不重要，(?:重要|要紧)的是"),
+    re.compile(r"真正[^，。！？\n]{0,16}的(?:，)?是"),
+    re.compile(r"不只(?:是)?[^。！？\n]{0,90}(?:还|也)"),
+)
+
+
+NOMINALIZATION_PATTERNS = (
+    re.compile(r"进行(?:了|一次|一场|着)?[^。，！？\n]{0,10}(?:调整|优化|升级|分析|讨论|沟通|梳理|复盘|迭代|探索|尝试|思考|规划|布局)"),
+    re.compile(r"实现了?[^。，！？\n]{0,14}的?[^。，！？\n]{0,6}(?:提升|增长|突破|转变|跃升|落地)"),
+    re.compile(r"完成了?对[^。，！？\n]{0,16}的"),
+    re.compile(r"起到了?[^。，！？\n]{0,12}的?作用"),
+    re.compile(r"具有[^。，！？\n]{0,10}(?:意义|价值)"),
+)
+
+
+CONJUNCTIONS = (
+    "因为",
+    "所以",
+    "但是",
+    "然而",
+    "同时",
+    "此外",
+    "而且",
+    "并且",
+    "因此",
+    "不仅",
+)
+
+
+SOCIAL_MANUAL_PATTERNS = (
+    re.compile(r"(?:这里|目前|当前)(?:能|能够|可以)确认的是"),
+    re.compile(r"(?:本文|这篇(?:文章|稿件)|文章(?:只|仅|将|会))[^。！？\n]{0,30}(?:讨论|说明|评价|处理|覆盖)"),
+    re.compile(r"(?:这|以上|两项|三项|四项)[^。！？\n]{0,20}(?:共同)?构成[^。！？\n]{0,20}(?:范围|框架|体系)"),
+    re.compile(r"(?:两套|两个|三种|四项|这些)[^。！？\n]{0,18}(?:承担|负责)[^。！？\n]{0,18}(?:不同|各自)"),
+)
+
+
 WECHAT_PUNCHLINE_PATTERNS = (
     re.compile(
-        r"(?:麻烦|问题|关键|难处)(?:恰好|正好|偏偏)?(?:出在|在于)"
-        r"(?:这种|这个|这里|此处|这一点)[^。！？\n]{0,24}[。！？]"
+        r"(?:麻烦|问题|关键|难处)(?:恰好|恰恰|正好|偏偏)?(?:出在|在于)"
+        r"(?:这种|这个|这里|这份|此处|这一点)[^。！？\n]{0,24}[。！？]"
     ),
     re.compile(r"[^。！？\n]{0,24}(?:在这一刻)?(?:成了|变成了)(?:表象|假象|症状)[。！？]"),
     re.compile(
@@ -333,6 +395,58 @@ def heavy_de_sentences(text: str) -> list[re.Match[str]]:
     return matches
 
 
+def anaphora_runs(text: str, minimum: int = 3) -> list[re.Match[str]]:
+    """找出同一句里三个以上小句使用同一开头的排比。"""
+
+    matches: list[re.Match[str]] = []
+    for sentence in re.finditer(r"[^。！？!?\n]+(?:[。！？!?]|$)", text):
+        clauses = [
+            clause.strip()
+            for clause in re.split(r"[，、；,;]", sentence.group())
+            if han_count(clause) >= 3
+        ]
+        if len(clauses) < minimum:
+            continue
+        run = 1
+        for previous, current in zip(clauses, clauses[1:]):
+            if previous[:2] == current[:2] and re.match(r"[\u4e00-\u9fff]{2}", current):
+                run += 1
+                if run >= minimum:
+                    matches.append(sentence)
+                    break
+            else:
+                run = 1
+    return matches
+
+
+def coefficient_of_variation(values: list[int]) -> Optional[float]:
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    if mean == 0:
+        return None
+    variance = sum((value - mean) ** 2 for value in values) / len(values)
+    return (variance**0.5) / mean
+
+
+def sentence_length_cv(text: str) -> Optional[tuple[float, int]]:
+    """返回句长变异系数和可识别句子数。"""
+
+    lengths = [
+        han_count(match.group())
+        for match in re.finditer(r"[^。！？!?\n]+[。！？!?]", text)
+        if han_count(match.group()) >= 4
+    ]
+    if len(lengths) < 12:
+        return None
+    value = coefficient_of_variation(lengths)
+    return (value, len(lengths)) if value is not None else None
+
+
+def bracket_highlights(text: str) -> list[re.Match[str]]:
+    return list(re.finditer(r"[「『][^」』\n]{1,6}[」』]", text))
+
+
 def short_streak(paragraphs: list[Paragraph], limit: int = 4) -> Optional[list[Paragraph]]:
     streak: list[Paragraph] = []
     for paragraph in paragraphs:
@@ -385,12 +499,21 @@ def add_pattern_signals(
     return score
 
 
-def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
+def check(
+    path: Path, profile: str, min_han: Optional[int] = None
+) -> tuple[int, int, list[str], list[str]]:
     source = path.read_text(encoding="utf-8")
     prose = mask_non_prose(source)
     failures: list[str] = []
     warnings: list[str] = []
     score = add_pattern_signals(source, prose, profile, failures, warnings)
+
+    total_han = han_count(prose)
+    if min_han is not None and total_han < min_han:
+        failures.append(
+            f"[篇幅不足] 当前 {total_han} 个汉字，文档契约最低 {min_han}。"
+            "材料足够时补回过程、条件、选择和后果；材料不足时明确缩小篇幅，不重复解释。"
+        )
 
     triple_matches = list(TRIPLE_PATTERN.finditer(prose))
     if len(triple_matches) >= 5:
@@ -407,13 +530,25 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
         warnings.append(f"[模板章节] {len(meta)} 个，{'、'.join(meta)}。确认是否真的服务读者。")
 
     h2_count = len(re.findall(r"^##\s+\S", prose, re.MULTILINE))
-    total_han = han_count(prose)
     if profile in SOCIAL_PROFILES and total_han <= 2200 and h2_count >= 2:
         score += 1
         warnings.append(
             f"[短稿小标题] {total_han} 个汉字使用 {h2_count} 个二级标题。"
             "公众号连续叙事稿先删掉标题试读；教程或确有定位需要时可以保留。"
         )
+
+    if profile in SOCIAL_PROFILES:
+        manual_matches = all_matches(prose, SOCIAL_MANUAL_PATTERNS)
+        if manual_matches:
+            score += min(3, len(manual_matches))
+            samples = "；".join(
+                f"第 {line_number(source, match.start())} 行“{excerpt(match.group(), 44)}”"
+                for match in manual_matches[:4]
+            )
+            warnings.append(
+                f"[说明书口吻] 共 {len(manual_matches)} 处。{samples}。"
+                "核验留在后台，正文优先写动作、选择和后果；职责分类确有必要时再保留。"
+            )
 
     visible = [line for line in prose.splitlines() if line.strip()]
     bullet_lines = sum(bool(re.match(r"^\s*(?:[-*+] |\d+[.)、]\s)", line)) for line in visible)
@@ -433,6 +568,15 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
         if ratio >= 0.75:
             score += 1
             warnings.append(f"[段落鼓点] {ratio:.0%} 的段落只有一句话。检查是否统一切成海报文案。")
+
+    if profile in SOCIAL_PROFILES and len(paragraphs) >= 8:
+        paragraph_cv = coefficient_of_variation([paragraph.han for paragraph in paragraphs])
+        if paragraph_cv is not None and paragraph_cv < 0.16:
+            score += 1
+            warnings.append(
+                f"[段落过齐] {len(paragraphs)} 个正文段的长度变异系数为 {paragraph_cv:.2f}。"
+                "检查是否把每段修成相近长度和单一功能；不要为通过检查器机械拆段。"
+            )
 
     streak = short_streak(paragraphs)
     if streak:
@@ -484,6 +628,65 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
         samples = "、".join(dict.fromkeys(term for _, term in marker_matches))
         warnings.append(f"[洞察路标] 共 {len(marker_matches)} 处，提醒线 {marker_limit} 处。重点检查 {samples}。")
 
+    if profile in SOCIAL_PROFILES:
+        anaphoras = anaphora_runs(prose)
+        if anaphoras:
+            score += 1
+            samples = "；".join(
+                f"第 {line_number(source, match.start())} 行“{excerpt(match.group(), 44)}”"
+                for match in anaphoras[:4]
+            )
+            warnings.append(
+                f"[同构排比] 共 {len(anaphoras)} 处。{samples}。三项以上留两项，第三项换说法或删除。"
+            )
+
+        nominalizations = all_matches(prose, NOMINALIZATION_PATTERNS)
+        if nominalizations:
+            score += 1
+            samples = "；".join(
+                f"第 {line_number(source, match.start())} 行“{excerpt(match.group(), 36)}”"
+                for match in nominalizations[:4]
+            )
+            warnings.append(
+                f"[名词化] 共 {len(nominalizations)} 处。{samples}。还原成谁做了什么和结果怎样变化。"
+            )
+
+        conjunction_hits = non_overlapping_terms(prose, CONJUNCTIONS)
+        if total_han >= 600 and len(conjunction_hits) * 1000 / total_han > 7:
+            score += 1
+            counts = collections.Counter(term for _, term in conjunction_hits)
+            samples = "、".join(f"{term} {count} 次" for term, count in counts.most_common(4))
+            warnings.append(
+                f"[连词过密] 每千字约 {len(conjunction_hits) * 1000 // total_han} 个。{samples}。"
+                "中文小句能靠语序和事理接上时，删掉一半试读。"
+            )
+
+        lyric_matches = non_overlapping_terms(prose, LYRIC_WORDS)
+        if len(lyric_matches) >= 2:
+            score += 1
+            samples = "、".join(dict.fromkeys(term for _, term in lyric_matches))
+            warnings.append(
+                f"[抒情词] 共 {len(lyric_matches)} 处，出现 {samples}。"
+                "写具体事物时保留，给抽象概念穿衣服时删除。"
+            )
+
+        highlights = bracket_highlights(prose)
+        highlight_limit = max(3, total_han // 700)
+        if len(highlights) > highlight_limit:
+            score += 1
+            samples = "、".join(dict.fromkeys(match.group() for match in highlights[:6]))
+            warnings.append(
+                f"[高亮短语] 「」短语共 {len(highlights)} 处，例词有 {samples}。检查是否在批量造金句。"
+            )
+
+        sentence_cv = sentence_length_cv(prose)
+        if sentence_cv and sentence_cv[0] < 0.42:
+            score += 1
+            warnings.append(
+                f"[句长过齐] {sentence_cv[1]} 个句子的长度变异系数为 {sentence_cv[0]:.2f}。"
+                "复杂处放开写，简单处压短；不要为通过检查器硬塞短句。"
+            )
+
     context_matches = non_overlapping_terms(prose, CONTEXT_JARGON)
     hard_spans = [(position, position + len(term)) for position, term in non_overlapping_terms(prose, HARD_JARGON)]
     context_matches = [
@@ -508,9 +711,25 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
     if profile in SOCIAL_PROFILES:
         for symbol, label in FORBIDDEN_PUNCTUATION.items():
             matches = list(re.finditer(re.escape(symbol), prose))
+            quote_colons: list[re.Match[str]] = []
+            if symbol in ("：", ":"):
+                hard_matches: list[re.Match[str]] = []
+                for match in matches:
+                    tail = prose[match.end() : match.end() + 2].lstrip()
+                    if tail[:1] in ("「", "『", "“", "‘", '"'):
+                        quote_colons.append(match)
+                    else:
+                        hard_matches.append(match)
+                matches = hard_matches
             if matches:
                 lines = "、".join(str(line_number(source, match.start())) for match in matches[:8])
                 failures.append(f"[{label}] 共 {len(matches)} 处，第 {lines} 行。")
+            if quote_colons:
+                lines = "、".join(str(line_number(source, match.start())) for match in quote_colons[:8])
+                warnings.append(
+                    f"[引语冒号] 共 {len(quote_colons)} 处，第 {lines} 行。"
+                    "确认后面确实是人物直接原话，不是提示性标题。"
+                )
 
         for position, phrase in non_overlapping_terms(prose, HARD_STOPS):
             failures.append(f"[硬停词] 第 {line_number(source, position)} 行，{phrase}")
@@ -522,9 +741,28 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
             for match in re.finditer(re.escape(phrase), prose):
                 failures.append(f"[模型路标] 第 {line_number(source, match.start())} 行，{phrase}")
 
-        for match in all_matches(prose, PIVOT_PATTERNS):
+        pivot_matches = all_matches(prose, PIVOT_PATTERNS)
+        for match in pivot_matches:
             failures.append(
                 f"[翻案句] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”"
+            )
+
+        occupied = [match.span() for match in pivot_matches]
+        semantic_pivots: list[re.Match[str]] = []
+        for match in all_matches(prose, SEMANTIC_PIVOT_PATTERNS):
+            if any(match.start() < end and match.end() > start for start, end in occupied):
+                continue
+            semantic_pivots.append(match)
+            occupied.append(match.span())
+        if semantic_pivots:
+            score += 1
+            samples = "；".join(
+                f"第 {line_number(source, match.start())} 行“{excerpt(match.group(), 44)}”"
+                for match in semantic_pivots[:4]
+            )
+            warnings.append(
+                f"[疑似翻案腔] 共 {len(semantic_pivots)} 处。{samples}。"
+                "确实走过误解与修正时保留，先立假误解再抬价时改成正面判断。"
             )
 
     if profile == "wechat-longform":
@@ -548,15 +786,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="检查中文成稿、社媒散文与公众号的 AI 写作痕迹")
     parser.add_argument("path", type=Path, help="UTF-8 Markdown 或纯文本文件")
     parser.add_argument("--profile", choices=PROFILES, default="universal", help="检查档位")
+    parser.add_argument(
+        "--min-han",
+        type=int,
+        help="文档契约允许的最低汉字数；只在材料已经足够时使用",
+    )
     parser.add_argument("--strict", action="store_true", help="阻断项存在或提示分达到 6 时返回失败")
     args = parser.parse_args()
+
+    if args.min_han is not None and args.min_han <= 0:
+        parser.error("--min-han 必须是正整数")
 
     if not args.path.exists() or not args.path.is_file():
         print(f"文件不存在：{args.path}", file=sys.stderr)
         return 2
 
     try:
-        total_han, score, failures, warnings = check(args.path, args.profile)
+        total_han, score, failures, warnings = check(args.path, args.profile, args.min_han)
     except UnicodeDecodeError:
         print("文件必须是 UTF-8 编码。", file=sys.stderr)
         return 2

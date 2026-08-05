@@ -2,12 +2,13 @@
 
 `human-doc-writing` incorporates and adapts writing methods from
 [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing), version
-1.0.0, research baseline commit
-`22d20b672680e4c1a34e75aec550ff48d622ca59`.
+1.1.0, research baseline commit
+`4fda173f3fef7fb808f3eba991eeb2528ea4b189`.
 
-Adapted areas include the fact and material gate, speaking position, paragraph
-progression, seven-pass revision, human-voice review, and parts of the prose
-checker design. The upstream project is licensed under the MIT License. Its
+Adapted areas include the fact and material gate, speaking position, positive
+social-prose drafting, paragraph and sentence rhythm, seven-pass revision,
+human-voice review, and parts of the prose checker design. The upstream project
+is licensed under the MIT License. Its
 attribution and license text are also retained in
 `human-doc-writing/references/human-writing-origin.md`.
 
