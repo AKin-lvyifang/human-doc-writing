@@ -15,7 +15,8 @@ from pathlib import Path
 from typing import Optional
 
 
-PROFILES = ("universal", "social-longform")
+PROFILES = ("universal", "social-longform", "wechat-longform")
+SOCIAL_PROFILES = ("social-longform", "wechat-longform")
 
 
 @dataclass(frozen=True)
@@ -203,6 +204,19 @@ PIVOT_PATTERNS = (
 )
 
 
+WECHAT_PUNCHLINE_PATTERNS = (
+    re.compile(
+        r"(?:麻烦|问题|关键|难处)(?:恰好|正好|偏偏)?(?:出在|在于)"
+        r"(?:这种|这个|这里|此处|这一点)[^。！？\n]{0,24}[。！？]"
+    ),
+    re.compile(r"[^。！？\n]{0,24}(?:在这一刻)?(?:成了|变成了)(?:表象|假象|症状)[。！？]"),
+    re.compile(
+        r"(?:最先|首先|第一件事)[^。！？\n]{0,24}"
+        r"(?:钉住|抓住|按住|撕开|刺穿)[^。！？\n]{0,24}[。！？]"
+    ),
+)
+
+
 LEFT_BRANCH_PATTERNS = (
     re.compile(r"(?:^|[。！？]\s*)在[^，。！？\n]{12,70}(?:以后|之后|之前|以前|过程中|情况下|背景下)，"),
     re.compile(r"(?:^|[。！？]\s*)那些[^，。！？\n]{10,60}的[^，。！？\n]{2,30}[，。]"),
@@ -380,7 +394,7 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
 
     triple_matches = list(TRIPLE_PATTERN.finditer(prose))
     if len(triple_matches) >= 5:
-        score += min(3, len(triple_matches) - 4) if profile == "social-longform" else 1
+        score += min(3, len(triple_matches) - 4) if profile in SOCIAL_PROFILES else 1
         lines = "、".join(str(line_number(source, match.start())) for match in triple_matches[:8])
         warnings.append(
             f"[口号式三连] {len(triple_matches)} 处，第 {lines} 行。"
@@ -394,7 +408,7 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
 
     h2_count = len(re.findall(r"^##\s+\S", prose, re.MULTILINE))
     total_han = han_count(prose)
-    if profile == "social-longform" and total_han <= 2200 and h2_count >= 2:
+    if profile in SOCIAL_PROFILES and total_han <= 2200 and h2_count >= 2:
         score += 1
         warnings.append(
             f"[短稿小标题] {total_han} 个汉字使用 {h2_count} 个二级标题。"
@@ -491,7 +505,7 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
         samples = "、".join(dict.fromkeys(hit[2] for hit in window))
         warnings.append(f"[借喻换场] 八百字内出现 {len(fields)} 套借喻，例词有 {samples}。")
 
-    if profile == "social-longform":
+    if profile in SOCIAL_PROFILES:
         for symbol, label in FORBIDDEN_PUNCTUATION.items():
             matches = list(re.finditer(re.escape(symbol), prose))
             if matches:
@@ -513,11 +527,25 @@ def check(path: Path, profile: str) -> tuple[int, int, list[str], list[str]]:
                 f"[翻案句] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”"
             )
 
+    if profile == "wechat-longform":
+        questions = list(re.finditer(r"[？?]", prose))
+        if questions:
+            lines = "、".join(str(line_number(source, match.start())) for match in questions[:8])
+            failures.append(
+                f"[公众号问号] 共 {len(questions)} 处，第 {lines} 行。"
+                "公众号非虚构正文不用问号；素材里的真实提问也改成不改变含义的间接表述。"
+            )
+
+        for match in all_matches(prose, WECHAT_PUNCHLINE_PATTERNS):
+            failures.append(
+                f"[表演性点题] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”"
+            )
+
     return total_han, score, failures, warnings
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="检查中文成稿的 AI 写作痕迹与社媒散文硬禁项")
+    parser = argparse.ArgumentParser(description="检查中文成稿、社媒散文与公众号的 AI 写作痕迹")
     parser.add_argument("path", type=Path, help="UTF-8 Markdown 或纯文本文件")
     parser.add_argument("--profile", choices=PROFILES, default="universal", help="检查档位")
     parser.add_argument("--strict", action="store_true", help="阻断项存在或提示分达到 6 时返回失败")

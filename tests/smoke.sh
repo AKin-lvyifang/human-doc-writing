@@ -31,8 +31,29 @@ HUMAN_DOC_ARCHIVE_URL="file://$archive_path" \
   bash "$repo_root/install.sh" --dest "$skills_root"
 
 test -f "$target/SKILL.md"
+test "$(tr -d '\r\n' < "$target/VERSION")" = "1.1.0"
 test -f "$target/agents/openai.yaml"
 test -x "$target/scripts/lint_ai_style.py"
+
+python3 "$target/scripts/lint_ai_style.py" \
+  "$repo_root/tests/fixtures/wechat-plain-good.md" \
+  --profile wechat-longform --strict >/dev/null
+
+if bad_output="$(python3 "$target/scripts/lint_ai_style.py" \
+  "$repo_root/tests/fixtures/wechat-performative-bad.md" \
+  --profile wechat-longform --strict 2>&1)"; then
+  echo "WeChat negative fixture unexpectedly passed." >&2
+  exit 1
+fi
+
+case "$bad_output" in
+  *"[公众号问号]"*"[表演性点题]"*) ;;
+  *)
+    echo "WeChat negative fixture did not trigger the expected gates." >&2
+    echo "$bad_output" >&2
+    exit 1
+    ;;
+esac
 
 touch "$target/.keep-existing"
 if HUMAN_DOC_ARCHIVE_URL="file://$archive_path" \

@@ -28,19 +28,21 @@ Adapted areas include the fact and material gate, speaking position, paragraph p
 
 This is an independent derivative project, not the official Khazix skill. It does not imitate the fixed “digital Khazix” persona, catchphrases, or sign-off. It keeps transferable writing methods and adds progressive profiles, document routing, technical-document adaptation, and long-form orchestration.
 
-## Results
+## Results and a correction
 
-The integration was tested with three matched Chinese writing prompts covering a GPT-5.6 long-running task, a UI Skills entry-point problem, and the design of a personal writing system.
+The integration was initially tested with three matched Chinese prompts covering a GPT-5.6 long-running task, a UI Skills entry-point problem, and a personal writing system.
 
-| Version | Mean score across three articles |
+| Historical version | Mean score across three articles |
 |---|---:|
 | Standalone `human-writing` | 91.3 |
 | Initial integration | 88.3 |
-| Final version after fixing continuity and repeated explanations | **93.3** |
+| v1.0 integration | 93.3 |
 
-The initial integration passed the quality threshold but introduced fixed subheadings, repeated definitions, and an internal-report tone. The final iteration addressed only those recurring problems. Its three articles scored 96, 89, and 95, with zero hard failures in both prose checkers.
+A later line-by-line reader review exposed a gap in that score. The v1.0 integration inserted self-authored questions followed by immediate answers, standalone “insight” sentences, and unnecessary action metaphors between factual paragraphs. Both checkers passed, yet the first two standalone articles read more naturally because they stated the facts, process, causes, and remedies directly.
 
-This is an internal forward test for regression detection, not a universal model benchmark. See [the evaluation notes](docs/evaluation.md) and [paired samples](examples/evaluation/README.md).
+Version 1.1 realigns default WeChat nonfiction with the standalone `human-writing` plain-prose baseline. Reader questions stay internal to information ordering; the published prose uses no question marks, and source questions are restated indirectly without changing their meaning; short verdicts that add no fact or explanation are deleted; and a new `wechat-longform` profile blocks self-questioning and performative punchlines.
+
+The 93.3 score remains historical evidence, not proof that the integration is better. Version 1.1 is a targeted regression fix based on real reader feedback and has not replaced user acceptance with another subjective number. See [the evaluation notes](docs/evaluation.md) and [revised samples](examples/evaluation/README.md).
 
 ## How it works
 
@@ -66,7 +68,7 @@ The skill uses progressive disclosure instead of loading every rule for every ta
 - `user/portraits/` and `user/anti-patterns/` hold local user preferences.
 - `references/types/` supplies defaults only when no personal profile exists.
 - `references/human-voice-gate.md` provides the shared human-voice review.
-- `scripts/lint_ai_style.py` provides `universal` and `social-longform` profiles.
+- `scripts/lint_ai_style.py` provides `universal`, `social-longform`, and a WeChat-specific `wechat-longform` profile.
 
 ## Use cases
 
@@ -167,12 +169,12 @@ All published artifacts passed a public-content review. Active personal profiles
 
 - The checker detects textual shapes; it cannot prove that a factual claim is true.
 - The skill never fabricates experiences, people, dialogue, or exact scenes to simulate a human writer.
-- The social-longform profile removes some punctuation patterns, pivot sentences, and inflated jargon. Technical documents retain necessary tables, lists, code, and precise terms.
+- The social-longform profile removes some punctuation patterns, pivot sentences, and inflated jargon. The WeChat profile additionally blocks self-authored questions and performative punchlines. Technical documents retain necessary tables, lists, code, and precise terms.
 - Profiles store transferable writing decisions, not full source articles, and do not guarantee imitation of a specific author.
 
 ## Validation
 
-The public package is checked with skill structure validation, Python syntax checks, an empty-profile-store test, both lint profiles, and a clean [one-command installation smoke test](tests/smoke.sh). See [the evaluation notes](docs/evaluation.md) for evidence and limitations.
+The public package is checked with skill structure validation, Python syntax checks, an empty-profile-store test, all three lint profiles, WeChat positive and negative regression fixtures, and a clean [one-command installation smoke test](tests/smoke.sh). See [the evaluation notes](docs/evaluation.md) for evidence and limitations.
 
 ## License
 
