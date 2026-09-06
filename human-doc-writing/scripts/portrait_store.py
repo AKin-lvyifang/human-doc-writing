@@ -8,6 +8,7 @@ before replacement and rebuilds a small human-readable index.
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import sys
 from datetime import datetime
@@ -24,6 +25,9 @@ TYPE_NAMES = {
     "wechat-article": "公众号文章",
     "xiaohongshu": "小红书内容",
     "social-article": "社媒中长文",
+    "commentary": "观点评论",
+    "narrative": "纪实/人物/经历",
+    "essay": "随笔/散文/读书",
 }
 
 KIND_DIRS = {
@@ -40,17 +44,32 @@ def user_root() -> Path:
     return skill_root() / "user"
 
 
-def active_path(type_id: str, kind: str) -> Path:
-    return user_root() / KIND_DIRS[kind] / f"{type_id}.md"
+def validate_name(name: str | None) -> None:
+    if name is not None and not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name):
+        raise ValueError("画像名称只能使用小写英文字母、数字和连接各段的连字符。")
+
+
+def check_storage_path(path: Path) -> Path:
+    if not path.resolve().is_relative_to(user_root().resolve()):
+        raise ValueError("画像路径不能越出 user 目录。")
+    return path
+
+
+def active_path(type_id: str, kind: str, name: str | None = None) -> Path:
+    validate_type(type_id)
+    validate_name(name)
+    folder = user_root() / KIND_DIRS[kind]
+    target = folder / type_id / f"{name}.md" if name else folder / f"{type_id}.md"
+    return check_storage_path(target)
 
 
 def history_dir() -> Path:
-    return user_root() / "history"
+    return check_storage_path(user_root() / "history")
 
 
 def ensure_dirs() -> None:
     for dirname in KIND_DIRS.values():
-        (user_root() / dirname).mkdir(parents=True, exist_ok=True)
+        check_storage_path(user_root() / dirname).mkdir(parents=True, exist_ok=True)
     history_dir().mkdir(parents=True, exist_ok=True)
 
 
@@ -61,15 +80,22 @@ def validate_type(type_id: str) -> None:
 
 
 def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d-%H%M%S")
+    return datetime.now().strftime("%Y%m%d-%H%M%S-%f")
 
 
-def backup(path: Path, kind: str, type_id: str) -> Path | None:
+def backup(path: Path, kind: str, type_id: str, name: str | None = None) -> Path | None:
     if not path.exists():
         return None
-    target = history_dir() / f"{type_id}-{kind}-{timestamp()}.md"
-    shutil.copy2(path, target)
-    return target
+    stem = f"{type_id}-{kind}{'-' + name if name else ''}-{timestamp()}"
+    suffix = 0
+    while True:
+        target = history_dir() / f"{stem}{'-' + str(suffix) if suffix else ''}.md"
+        try:
+            with target.open("x", encoding="utf-8") as handle:
+                handle.write(path.read_text(encoding="utf-8"))
+            return target
+        except FileExistsError:
+            suffix += 1
 
 
 def first_heading(path: Path) -> str:
@@ -100,53 +126,67 @@ def iter_active() -> Iterable[tuple[str, str, Path]]:
         for path in sorted(folder.glob("*.md")):
             if path.name.lower() == "readme.md":
                 continue
-            yield kind, path.stem, path
+            yield kind, path.stem, check_storage_path(path)
+        for type_id in TYPE_NAMES:
+            for path in sorted((folder / type_id).glob("*.md")):
+                validate_name(path.stem)
+                yield kind, type_id, check_storage_path(path)
 
 
-def rebuild_index() -> Path:
-    index = user_root() / "portrait-index.md"
+def render_index() -> str:
     rows = []
     for kind, type_id, path in iter_active():
         display = TYPE_NAMES.get(type_id, type_id)
         kind_name = "正向" if kind == "positive" else "反例"
         modified = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-        rows.append((display, kind_name, first_heading(path), source_line(path), modified, path))
+        name = "默认" if path.parent.name == KIND_DIRS[kind] else path.stem
+        rows.append((display, kind_name, name, first_heading(path), source_line(path), modified, path))
 
     lines = ["# 当前写作画像", ""]
     if not rows:
         lines.extend([
             "暂时没有用户画像。",
             "",
-            "把文章、正文或链接交给 Codex，并说它是什么类型的好例子或反例即可。",
+            "把完整文章或链接交给 Codex，并说明要学习或记住其中的写法，即可建立画像。",
         ])
     else:
         lines.extend([
-            "| 类型 | 画像 | 名称 | 来源 | 更新时间 |",
-            "|---|---|---|---|---|",
+            "| 类型 | 画像 | 变体 | 名称 | 来源 | 更新时间 | 相对路径 |",
+            "|---|---|---|---|---|---|---|",
         ])
-        for display, kind_name, title, source, modified, _ in rows:
+        for display, kind_name, name, title, source, modified, path in rows:
             safe_source = source.replace("|", "\\|")
-            lines.append(f"| {display} | {kind_name} | {title} | {safe_source} | {modified} |")
+            safe_title = title.replace("|", "\\|")
+            relative = path.relative_to(user_root()).as_posix()
+            lines.append(f"| {display} | {kind_name} | {name} | {safe_title} | {safe_source} | {modified} | `{relative}` |")
     lines.append("")
+    return "\n".join(lines)
+
+
+def rebuild_index() -> Path:
+    index = check_storage_path(user_root() / "portrait-index.md")
     index.parent.mkdir(parents=True, exist_ok=True)
-    index.write_text("\n".join(lines), encoding="utf-8")
+    index.write_text(render_index(), encoding="utf-8")
     return index
 
 
 def cmd_save(args: argparse.Namespace) -> int:
-    validate_type(args.type)
+    name = getattr(args, "name", None)
+    target = active_path(args.type, args.kind, name)
     profile = Path(args.profile).expanduser().resolve()
     if not profile.is_file():
         raise FileNotFoundError(f"画像文件不存在：{profile}")
     content = profile.read_text(encoding="utf-8")
-    if not content.lstrip().startswith("# "):
-        raise ValueError("画像必须是普通 Markdown，并以一级标题开头。")
     if content.lstrip().startswith("---"):
         raise ValueError("画像不应使用 YAML frontmatter。")
+    if not content.lstrip().startswith("# "):
+        raise ValueError("画像必须是普通 Markdown，并以一级标题开头。")
 
+    if profile == target.resolve():
+        raise ValueError("输入画像已经位于保存目标，请使用另一份待保存文件。")
     ensure_dirs()
-    target = active_path(args.type, args.kind)
-    old_backup = backup(target, args.kind, args.type)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    old_backup = backup(target, args.kind, args.type, name)
     shutil.copy2(profile, target)
     index = rebuild_index()
 
@@ -160,15 +200,13 @@ def cmd_save(args: argparse.Namespace) -> int:
 
 
 def cmd_list(_: argparse.Namespace) -> int:
-    ensure_dirs()
-    index = rebuild_index()
-    print(index.read_text(encoding="utf-8"))
+    print(render_index())
     return 0
 
 
 def cmd_show(args: argparse.Namespace) -> int:
     validate_type(args.type)
-    path = active_path(args.type, args.kind)
+    path = active_path(args.type, args.kind, getattr(args, "name", None))
     if not path.exists():
         print("没有找到对应画像。")
         return 1
@@ -178,12 +216,13 @@ def cmd_show(args: argparse.Namespace) -> int:
 
 def cmd_reset(args: argparse.Namespace) -> int:
     validate_type(args.type)
-    ensure_dirs()
-    path = active_path(args.type, args.kind)
+    name = getattr(args, "name", None)
+    path = active_path(args.type, args.kind, name)
     if not path.exists():
         print("没有对应画像，无需重置。")
         return 0
-    old_backup = backup(path, args.kind, args.type)
+    ensure_dirs()
+    old_backup = backup(path, args.kind, args.type, name)
     path.unlink()
     rebuild_index()
     print(f"已移除：{path}")
@@ -196,23 +235,26 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="管理 human-doc-writing 写作画像")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    save = sub.add_parser("save", help="保存并启用一份画像")
+    save = sub.add_parser("save", help="保存画像；同名更新前备份，不影响其他写法")
     save.add_argument("--type", required=True, choices=sorted(TYPE_NAMES))
     save.add_argument("--kind", choices=sorted(KIND_DIRS), default="positive")
+    save.add_argument("--name", help="可选写法名称，如 warm-observation；省略时保存类型默认画像")
     save.add_argument("--profile", required=True, help="待保存的 Markdown 画像文件")
     save.set_defaults(func=cmd_save)
 
-    list_cmd = sub.add_parser("list", help="列出当前画像")
+    list_cmd = sub.add_parser("list", help="只读列出默认与具名画像及路径")
     list_cmd.set_defaults(func=cmd_list)
 
     show = sub.add_parser("show", help="显示一份当前画像")
     show.add_argument("--type", required=True, choices=sorted(TYPE_NAMES))
     show.add_argument("--kind", choices=sorted(KIND_DIRS), default="positive")
+    show.add_argument("--name", help="具名画像；省略时显示类型默认画像")
     show.set_defaults(func=cmd_show)
 
     reset = sub.add_parser("reset", help="移除当前画像并保留历史备份")
     reset.add_argument("--type", required=True, choices=sorted(TYPE_NAMES))
     reset.add_argument("--kind", choices=sorted(KIND_DIRS), default="positive")
+    reset.add_argument("--name", help="只移除这一具名画像；省略时只移除类型默认画像")
     reset.set_defaults(func=cmd_reset)
 
     return parser

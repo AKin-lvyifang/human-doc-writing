@@ -1,5 +1,9 @@
 # 融合评测 / Integration evaluation
 
+> 本页记录 v1.0–v1.2 的历史评测，数值与检查行为均对应当时版本，不代表 v2.0.0 的表现或现行写作要求。当前能力和使用方法见 [README](../README.md)。
+>
+> This page preserves historical evaluations of v1.0–v1.2. Scores and checker behavior belong to those versions and do not establish v2.0.0 performance or current writing requirements. See the [current README](../README_EN.md).
+
 ## 中文
 
 ### 目的

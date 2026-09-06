@@ -1,90 +1,45 @@
-# 文章类型路由
+# 文体与场合路由
 
-先按读者要完成什么分类，再看平台和文件名。平台是载体，统领目标决定结构。
+分别判断这篇文章做什么、在哪里读、怎样表达。用户当前明确要求优先；其余选择依据材料和阅读场景自主完成，不要求用户填写分类表。
 
-## 路由优先级
+## 先选实质文体
 
-1. 用户明确指定的交付物和平台。
-2. 目标文件名或路径。
-3. 统领目标和阅读场景。
-4. 内容素材和事实来源。
-5. 语气偏好。
+`type_id` 表示读者任务。文件名可以帮助判断，但平台名称本身不能决定文体。
 
-## 类型表
+| type_id | 读者任务与典型用途 | 必读类型卡 |
+|---|---|---|
+| `explainer` | 理解概念、机制、政策或方法及其边界 | [说明文](types/explainer.md) |
+| `product-doc` | 了解产品如何工作，判断是否适合自己 | [产品文档](types/product-doc.md) |
+| `how-to` | 完成操作、解决故障并确认结果 | [教程](types/how-to.md) |
+| `prd` | 对需求范围、行为规则和验收形成一致理解 | [PRD](types/prd.md) |
+| `github-readme` | 在仓库首页判断项目，并找到上手路径 | [README](types/github-readme.md) |
+| `github-release` | 理解某版本的真实变化、影响和升级动作 | [发布说明](types/github-release.md) |
+| `commentary` | 评估观点，理解作者判断的依据与取舍 | [观点评论](types/commentary.md) |
+| `narrative` | 通过真实人物、事件或经历理解处境与变化 | [纪实叙述](types/narrative.md) |
+| `essay` | 跟随观察、阅读或生活感受，形成更细致的体会 | [随笔散文](types/essay.md) |
 
-| type_id | 常见请求或路径 | 子类型示例 | 统领目标 | 类型写作卡 |
-|---|---|---|---|---|
-| `explainer` | 说明某概念、机制、政策、方法 | 概念解释、机制说明、方案说明 | 让读者理解一件事及其边界 | `types/explainer.md` |
-| `product-doc` | 产品介绍、白皮书、产品概览 | 产品概览、设计说明、白皮书 | 帮读者理解、评估或采用产品 | `types/product-doc.md` |
-| `how-to` | 快速开始、操作指南、帮助中心 | 快速开始、任务教程、故障排查 | 帮读者完成可验证的操作 | `types/how-to.md` |
-| `prd` | PRD、需求说明、方案评审 | 新功能、改版、平台方案 | 帮团队形成可执行决策 | `types/prd.md` |
-| `github-readme` | `README.md`、开源项目首页 | CLI、库、应用、插件 | 让访客判断项目并跑起来 | `types/github-readme.md` |
-| `github-release` | Release、CHANGELOG、版本公告 | 大版本、小版本、补丁 | 让用户理解版本影响和下一步 | `types/github-release.md` |
-| `wechat-article` | 公众号文章、长图文 | 观点、案例、教程、复盘 | 让读者沿一条主线形成判断 | `types/wechat-article.md` |
-| `xiaohongshu` | 小红书笔记、经验/教程帖 | 经验、清单、教程、测评 | 让读者快速获得可用结论 | `types/xiaohongshu.md` |
-| `social-article` | 知乎回答、论坛长帖、博客、微博/即刻等社媒中长文 | 回答、观点、经历、行业解读 | 让读者跟随材料与推理形成判断 | `types/social-article.md` |
+同一材料可以有不同写法。解释行业变化的机制用 `explainer`，判断它值得支持与否用 `commentary`；写一段经历的变化用 `narrative`，从经历延伸观察和感受用 `essay`。选择由文章主要任务决定，不由有没有故事或第一人称决定。
 
-主类型用于选择画像。它不限制文章只能有一个内容模块，也不阻止长文覆盖多个相互关联的方面。
+`README.md`、Release、PRD 等明确交付形式通常直接对应同名文体。混合文档以主要任务选卡，只有确实承担另一任务的部分才补读对应卡，例如产品说明书的操作部分补读 `how-to`。多个交付物分别选型，并统一事实和术语。
 
-## 关键区分
+完整小说、虚构故事、对白与剧本不在本 Skill 默认范围内；这类明确创作请求按当前可用的专门写作能力处理，不把纪实卡套给虚构作品。
 
-### 说明文 vs 产品文档
+## 再看阅读场合
 
-- 重点解释概念或机制：`explainer`。
-- 重点解释产品解决什么、如何工作、是否适合：`product-doc`。
+`platform` 单独记录发表场合。以下旧 ID 继续作为兼容入口；遇到它们先确定上表的实质文体，再按需读平台卡。
 
-### 产品文档 vs 教程
+| 平台兼容 ID | 场合提示 | 平台卡 |
+|---|---|---|
+| `wechat-article` | 微信公众号；通常需要照顾手机上的连续阅读 | [公众号](types/wechat-article.md) |
+| `xiaohongshu` | 小红书；通常需要照顾发现、扫描与回看 | [小红书](types/xiaohongshu.md) |
+| `social-article` | 知乎、论坛、博客等；结合具体问题和读者社群判断 | [其他社媒](types/social-article.md) |
 
-- 帮读者理解和判断：`product-doc`。
-- 帮读者完成具体操作：`how-to`。
+平台卡补充标题、导航和阅读节奏，不能替代文体底线，也不能把所有内容变成平台常见套路。公众号可以是教程、评论、人物特写或随笔；未指定平台的文章不必硬填平台。
 
-### GitHub README vs 普通产品介绍
+## 画像与表达选择
 
-- 仓库首页，读者需要安装、运行、查看兼容性：`github-readme`。
-- 面向产品用户，重点是问题、流程和边界：`product-doc`。
-
-### 公众号 vs 小红书
-
-- 需要连续论证、案例展开和完整阅读：`wechat-article`。
-- 需要快速扫描、经验压缩和即时可用结论：`xiaohongshu`。
-
-### 公众号 vs 其他社媒中长文
-
-- 明确发布在微信公众号、需要长图文连续阅读：`wechat-article`。
-- 知乎、论坛、博客、微博长文、即刻长帖或未指定平台的社媒中长文：`social-article`。
-- 文章需要连续论证时，不因为平台叫“社媒”就压成短笔记。
-
-## 文件名提示
-
-- `README.md`：优先 `github-readme`。
-- `CHANGELOG.md`、`releases/`：优先 `github-release`。
-- `getting-started`、`quickstart`、`how-to`、`troubleshooting`：优先 `how-to`。
-- `PRD`、`requirements`、`spec`：优先 `prd`，纯技术规范除外。
-- `overview`、`whitepaper`、`product`：优先 `product-doc`。
-
-## 多类型内容
-
-- 一篇内容可以有一个主类型和若干内容模块。
-- 平台风格只作为表达约束，不自动改变主类型。
-- 如果用户同时要 README、教程和公众号稿，这是多交付物，不是一个“混合类型文件”。分别产出，再由主 Agent 统一事实和术语。
-
-## 模糊请求处理
-
-用户只说“写个 GitHub 文”“写个宣传文”时，先根据路径和材料预判，再在确认卡中只问一个结构性问题。不要把分类工作整包退给用户。
-
-## 画像映射
-
-识别到 `type_id` 后读取：
-
-```text
-user/portraits/<type_id>.md
-user/anti-patterns/<type_id>.md
-```
-
-没有正向画像时，才读取：
-
-```text
-references/types/<type_id>.md
-```
-
-对用户始终显示中文名称。
+1. 始终读取所选 `references/types/<type_id>.md`。其中内容底线不因存在画像而省略；可选推进方式不需要全部采用。
+2. 有 `user/preferences.md` 时读取其中通用目标偏好，再按 `user/portrait-index.md` 查找与本次文体、用途相符的画像和避雷记录；兼容旧结构时检查 `user/portraits/<type_id>.md`、`user/anti-patterns/<type_id>.md`，缺失就继续。画像覆盖默认表达方式，不覆盖事实、操作和验收要求。
+3. 若存在旧平台画像，只在本次平台及画像声明的子类型、适用范围都匹配时使用。`wechat-article` 的产品体验、项目复盘偏好不能外推到人物特写、生活随笔或所有公众号文章；只写了平台却没有明确文体范围的旧画像不自动成为通用文风。
+4. 有多个适用画像时，选最贴合本次读者体验的一份为主，其余只补不冲突的明确偏好；不平均混合所有风格。当前要求和本次样文高于旧画像。
+5. 需要选择或调整文风时，读 [表达选择](style-selection.md)。最终形成简短内部判断即可，无需向用户汇报分类过程。

@@ -2,104 +2,11 @@
 
 English | [简体中文](README.md)
 
-An open-source Chinese writing skill for Codex. It combines progressive personal writing profiles, scenario-aware document routing, and a universal human-voice quality gate for WeChat articles, Xiaohongshu, Zhihu, blogs, product documentation, tutorials, PRDs, GitHub READMEs, and release notes.
+A Chinese writing and editing skill for Codex, currently **2.0.0**. It chooses genre and voice from the material, audience, and occasion. Use it for articles, product documentation, tutorials, PRDs, READMEs, and release notes, or teach it your writing preferences through sample texts.
 
-It does not force every document into one generic “human” style. Profiles decide how a specific document should sound and unfold. The universal gate protects shared standards for facts, source material, progression, and natural Chinese.
+A notice should make arrangements easy to find. A character sketch can linger on a detail. A commentary needs a clear basis for its judgment. This skill brings those reader needs into the selection of material, structure, pacing, and language, using literary expression where it serves the piece.
 
-## What problem it solves
-
-Writing prompts often fall into one of two traps.
-
-- A style-only system may preserve fabricated details, repeated explanations, and model-like phrasing together with the desired voice.
-- A universal anti-AI checklist may flatten WeChat essays, PRDs, READMEs, and tutorials into the same tone.
-
-`human-doc-writing` separates those responsibilities.
-
-1. Route the task by what the reader needs to accomplish.
-2. Load the current positive and negative profile for that document type.
-3. Write from user-provided material and verifiable project facts.
-4. Run every draft through the material gate, seven-pass revision, and the appropriate prose checker.
-
-## Origin and attribution
-
-This project incorporates and adapts methods from [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing) 1.1.0, using commit `4fda173f3fef7fb808f3eba991eeb2528ea4b189` as the current research baseline.
-
-Adapted areas include the fact and material gate, speaking position, paragraph progression, Chinese sentence order, seven-pass revision, final human-voice review, and parts of the automated prose checker. The upstream project uses the MIT License. Full attribution is retained in [NOTICE.md](NOTICE.md) and [the bundled origin notice](human-doc-writing/references/human-writing-origin.md).
-
-This is an independent derivative project, not the official Khazix skill. It does not imitate the fixed “digital Khazix” persona, catchphrases, or sign-off. It keeps transferable writing methods and adds progressive profiles, document routing, technical-document adaptation, and long-form orchestration.
-
-## Results and two corrections
-
-The integration was initially tested with three matched Chinese prompts covering a GPT-5.6 long-running task, a UI Skills entry-point problem, and a personal writing system.
-
-| Historical version | Mean score across three articles |
-|---|---:|
-| Standalone `human-writing` | 91.3 |
-| Initial integration | 88.3 |
-| v1.0 integration | 93.3 |
-
-A later line-by-line reader review exposed a gap in that score. The v1.0 integration inserted self-authored questions followed by immediate answers, standalone “insight” sentences, and unnecessary action metaphors between factual paragraphs. Both checkers passed, yet the first two standalone articles read more naturally because they stated the facts, process, causes, and remedies directly.
-
-Version 1.1 realigns default WeChat nonfiction with the standalone `human-writing` plain-prose baseline. Reader questions stay internal to information ordering; the published prose uses no question marks, and source questions are restated indirectly without changing their meaning; short verdicts that add no fact or explanation are deleted; and a new `wechat-longform` profile blocks self-questioning and performative punchlines.
-
-A second reader review found that version 1.1 had over-corrected. All three drafts had exactly 12 paragraphs, read as safe and orderly product explanations, and missed the brief's approximate 1,200-character target. Useful process and consequence material had been compressed together with the model-like phrasing.
-
-Version 1.2 changes the workflow order. Before drafting, it loads only the fact and material gate plus a positive social-prose guide derived from the standalone skill. Detailed anti-AI revision rules are loaded only after a complete first draft exists. Revision protects speaking position, ordinary judgment, material depth, and irregular rhythm before removing model-shaped prose. The checker adds optional `--min-han`, manual-tone and overly-even-paragraph signals; a separate batch checker detects identical paragraph counts across three or more drafts.
-
-Rechecking all three sample groups with the same current checker produced the following results.
-
-| Sample group | Chinese characters | Body paragraphs | 1,200-character gate | Batch shape |
-|---|---|---|---|---|
-| Historical standalone | 1204 / 1223 / 1249 | 12 / 13 / 12 | All pass | No shared shape detected |
-| Over-corrected v1.1 drafts | 1149 / 1047 / 1167 | 12 / 12 / 12 | All fail | Identical paragraph count detected |
-| Revised v1.2 drafts | 1215 / 1213 / 1230 | 11 / 9 / 9 | All pass | No shared shape detected |
-
-On a reread with the original rubric, v1.2 returns to roughly the same overall level as the standalone samples. Some sentences in the first two standalone articles remain looser and more natural. The third v1.2 article is less like a product explanation because it preserves the real failed iteration and the resulting workflow change. That third article includes second-round feedback and is not a strict same-material blind test. This is a regression result for three articles, not a universal superiority claim.
-
-The 93.3 score remains historical evidence from version 1.0, not proof that the integration is better. See [the evaluation notes](docs/evaluation.md) and [revised samples](examples/evaluation/README.md).
-
-## How it works
-
-```mermaid
-flowchart TD
-    A[User request] --> B{Mode}
-    B -->|Profile ingestion| C[Detect document type]
-    C --> D[Extract transferable writing decisions]
-    D --> E[Save a positive or negative profile]
-    B -->|Write or revise| F[Fact and material gate]
-    F --> G[Type routing, length contract, and profile]
-    G --> H[Load positive drafting guidance for social prose]
-    H --> I[Write a complete material-led first draft]
-    I --> J[Load seven-pass revision only after drafting]
-    J --> K[Universal or social-longform checker]
-    K --> L[Deliver]
-```
-
-The skill uses progressive disclosure instead of loading every rule for every task.
-
-- `SKILL.md` holds the modes and top-level workflow.
-- `references/type-router.md` routes by reader task.
-- `user/portraits/` and `user/anti-patterns/` hold local user preferences.
-- `references/types/` supplies defaults only when no personal profile exists.
-- `references/material-gate.md` checks facts, source material, and the length contract before drafting.
-- `references/natural-social-prose.md` provides positive first-draft guidance for WeChat, Zhihu, blogs, and other long social prose.
-- `references/human-voice-gate.md` is loaded only after drafting for shared human-voice revision.
-- `scripts/lint_ai_style.py` provides three profiles and an optional minimum-character gate; `scripts/compare_draft_shapes.py` checks a batch for reused paragraph skeletons.
-
-## Use cases
-
-| Scenario | What the skill focuses on |
-|---|---|
-| WeChat, Zhihu, blogs, and long social posts | Material sufficiency, speaking position, paragraph progression, and endings |
-| Xiaohongshu | Immediate value, scan rhythm, concrete actions, and experience boundaries |
-| Product docs and white papers | Positioning, capability boundaries, status language, and onboarding path |
-| Tutorials and help centers | Executable steps, prerequisites, verification, and troubleshooting |
-| PRDs | Decision context, scope, state, acceptance criteria, and non-goals |
-| GitHub READMEs and releases | First-screen relevance, shortest install path, compatibility, and upgrade impact |
-| Rewriting and de-AI editing | Preserve facts while removing fake specificity, model signposts, and repeated summaries |
-| Profile ingestion | Learn structure, rhythm, and editorial choices without storing the source article |
-
-## One-command install
+## Get started
 
 On macOS or Linux:
 
@@ -107,91 +14,139 @@ On macOS or Linux:
 curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/main/install.sh | bash
 ```
 
-The default destination is `${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing`. The installer never overwrites an existing directory. Review [install.sh](install.sh) first if you prefer an inspect-before-run workflow.
+The script installs from `main` to `${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing` by default. Installation requires Bash, `curl`, and `tar`. The skill's helper scripts use the Python 3 standard library, with no third-party Python packages. You can inspect [install.sh](install.sh) first.
 
-You can also use Codex's bundled installer:
+If the destination already exists, the installer stops without overwriting it. Existing users should follow the upgrade steps below. After installation, start a new Codex task, confirm that `human-doc-writing` appears in the skill list, and provide your material:
 
-```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo AKin-lvyifang/human-doc-writing \
-  --path human-doc-writing
+```text
+$human-doc-writing
+Write a Chinese WeChat commentary of about 800 characters from this material
+for general readers. Make the judgment clear and measured. Choose a suitable
+voice from the material and return the article directly.
 ```
 
-Deploy to a custom skills directory:
+For a custom skills directory:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/main/install.sh \
   | bash -s -- --dest "$HOME/.agents/skills"
 ```
 
-Start a new Codex turn after installation so the skill list refreshes.
+For a fixed version or manual installation, download `human-doc-writing-2.0.0.zip` and `SHA256SUMS.txt` from the [v2.0.0 release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0). The extracted skill is at `human-doc-writing-2.0.0/human-doc-writing/`, containing `SKILL.md`. Place that inner directory in your skills directory. Install the skill subdirectory, not the entire repository.
 
-## Manual deployment
+## How 2.0.0 approaches writing
+
+### Genre and publishing platform are separate choices
+
+The skill first considers what the reader needs to understand, feel, or accomplish, then chooses how to express it. WeChat, Xiaohongshu, Zhihu, and blogs provide a reading context; they do not prescribe one voice.
+
+Nine substantive genres are included:
+
+| Genre | Focus |
+|---|---|
+| Explainer | Concepts, relationships, examples, and conditions |
+| Product documentation | Purpose, capability boundaries, and getting started |
+| Tutorial | Prerequisites, steps, signs of success, and troubleshooting |
+| PRD | Goals, scope, behavior, and acceptance criteria |
+| GitHub README | Project purpose, a short path to use, and limitations |
+| GitHub release | User-visible changes, compatibility, and upgrade steps |
+| Commentary | Judgment, evidence, tradeoffs, and limits |
+| Factual narrative | Sourced people, actions, relationships, and change |
+| Essay | Concrete observations, associations, rhythm, and resonance |
+
+The essential requirements of each genre always apply. For example, a tutorial must still explain how to recognize success when a personal profile is in use. Full novels, fictional stories, dialogue, and scripts are outside this skill's default creative scope.
+
+### Voice follows the piece
+
+The writing guidance covers observation, the author's position, the order in which material is revealed, emphasis, narrative distance, and sentence rhythm. An explanation can be clear and patient, a character sketch warm and attentive, and a commentary pointed but measured.
+
+Questions, metaphor, parallelism, repetition, pauses, and callbacks may all be used when they contribute. The skill checks their purpose and accuracy rather than treating a punctuation mark or sentence pattern as inherently AI-like. Literary expression remains bounded by the material: it cannot invent thoughts, dialogue, or scene details for real people.
+
+When the request is clear, writing starts directly, without a routine confirmation card or style menu. A local edit covers only the requested passage and its connections, preserving text outside the requested change.
+
+### Edit from the reader's position
+
+Editing protects effective observations, voice, and expression before repairing gaps in understanding, unsupported claims, redundant passages, or excessive rhetoric. Revisions address specific problems, without a fixed number of review passes. A paragraph may support understanding, narrative, feeling, or a useful reading pause; it need not introduce a new fact every time.
+
+## Writing, revision, and profile learning
+
+Provide the material, audience, purpose, and necessary constraints. You can leave ordinary voice choices to the skill.
+
+**Make a local edit:**
+
+```text
+$human-doc-writing
+Revise only the second paragraph so a first-time reader can understand it.
+Keep all other text and do not add capabilities absent from the draft.
+```
+
+**Borrow a style for this task only:**
+
+```text
+$human-doc-writing
+Analyze this essay's narrative distance and pacing. Use those choices for
+this revision only; do not save a profile.
+```
+
+**Save a particular approach:**
+
+```text
+$human-doc-writing
+Learn how this character sketch selects details and controls pacing.
+Save it as warm-observation under narrative. Keep existing profiles and
+do not replace the default.
+```
+
+One complete, readable sample can establish a profile. Profiles record “creative choice → reader effect → conditions for use.” They do not transfer the original author's identity, experiences, opinions, or distinctive sentences into a new piece. Analysis and one-time references stay local to the task; persistent preferences are saved only when explicitly requested.
+
+Multiple named profiles can coexist within a genre, with the closest match selected for each task. Legacy platform profiles and default profiles remain readable, but apply only when their declared genre, purpose, and occasion match. Current instructions take precedence; a single piece of feedback does not become a rule for all writing.
+
+From the installed skill directory, you can also inspect profiles:
 
 ```bash
-git clone --depth 1 https://github.com/AKin-lvyifang/human-doc-writing.git
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R human-doc-writing/human-doc-writing "${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing"
+python3 scripts/portrait_store.py list
+python3 scripts/portrait_store.py show --type narrative --name warm-observation
 ```
 
-The skill's scripts use only the Python 3 standard library.
+The second command assumes that profile has been saved. Named profiles live at `user/portraits/<type_id>/<name>.md`; negative profiles live at `user/anti-patterns/<type_id>/<name>.md`. Legacy default paths remain supported. A backup is kept before a profile is replaced or removed. See [profile learning](human-doc-writing/references/portrait-ingestion.md) for details.
 
-## Usage
+## What the checkers do
 
-### Write from material
+From the skill directory, check a complete Markdown or plain-text draft with:
 
-```text
-$human-doc-writing
-Write a Chinese WeChat retrospective from these project notes for product managers using Codex. Preserve factual boundaries and execute directly.
+```bash
+python3 scripts/lint_ai_style.py /absolute/path/article.md --strict
 ```
 
-### Ingest a positive profile
+`--strict` returns failure only for internal process annotations left in the text or an unmet, explicitly configured minimum Chinese-character count. Add `--min-han N` when such a minimum applies. `universal`, `social-longform`, and `wechat-longform` remain available as compatible advisory profiles. Style warnings do not block delivery and need not be reduced to zero.
 
-```text
-$human-doc-writing
-This is a product document I like. Learn its structure, rhythm, and editorial choices as my product-document profile. Do not copy its facts or sentences.
-```
+`compare_draft_shapes.py` can flag potentially shared structures across drafts, and `de_ai_diff.py` can show how much text changed. Matching paragraph counts and rewrite percentages do not measure writing quality. Passing a script does not establish factual accuracy, natural voice, or literary merit.
 
-### Record an anti-pattern
+**Behavior change for automated workflows:** legacy command-line options remain compatible, but style matches and batch-structure warnings no longer make `--strict` fail. Workflows that used those failures to reject drafts need adjustment. Decisions to revise should follow reader understanding, genre requirements, and the actual effect of the writing.
 
-```text
-$human-doc-writing
-I dislike the report-like tone and mechanical conclusion in this article. Save them as anti-patterns for WeChat articles.
-```
+## Upgrade from an earlier version
 
-### Remove model-like writing
+**Back up the entire old skill and preserve its complete `user/` directory.**
 
-```text
-$human-doc-writing
-Keep the facts and position of this draft, rewrite it as natural Chinese, and remove claims that are unsupported by the material.
-```
+1. Copy the current `human-doc-writing` directory to a backup location outside the directories searched for skills. Keep this complete copy for recovery.
+2. Download and extract the [v2.0.0 release package](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0), checking the download against the attached `SHA256SUMS.txt`.
+3. Open the extracted `human-doc-writing-2.0.0/human-doc-writing/` directory and replace all public files and directories in the old skill, including `SKILL.md`, `VERSION`, `references/`, `scripts/`, `agents/`, and `tests/`. The sole exception is the complete existing `user/`, including preferences, profiles, the index, and history. Do not overwrite it with the package's user directory.
+4. Start a new Codex task, confirm that the skill is available, and check that your existing profiles can still be listed.
 
-## Built-in document types
+The installer does not perform in-place upgrades. The public package includes no active personal profiles. Without a profile, the skill uses genre cards and general writing guidance directly.
 
-The current router supports explainers, product documents, tutorials, PRDs, GitHub READMEs, GitHub releases, WeChat articles, Xiaohongshu, and other long-form social writing.
+## Further reading
 
-The public package ships without anyone's active personal profiles. It uses built-in type cards until the user ingests examples. New profiles are stored under the skill's `user/` directory, which should be preserved during upgrades or migration.
+- [Complete skill instructions](human-doc-writing/SKILL.md)
+- [Genre and platform routing](human-doc-writing/references/type-router.md)
+- [Voice selection](human-doc-writing/references/style-selection.md) and [writing craft](human-doc-writing/references/writing-craft.md)
+- [Profile template](templates/portrait-template.md) and [profile example](templates/portrait-example.md)
+- [Brief clarification when needed](templates/brief-template.md)
 
-## Templates and examples
+The [historical evaluation notes](docs/evaluation.md) and [paired historical samples](examples/evaluation/README.md) document experiments and corrections in earlier versions. Those scores, drafts, and checks are evidence about old versions. They do not establish the writing quality of 2.0.0 or show that it is better for every subject.
 
-- [Profile template](templates/portrait-template.md)
-- [Profile example](templates/portrait-example.md)
-- [Writing brief template](templates/brief-template.md)
-- [Paired evaluation samples](examples/evaluation/README.md)
+## Origin and license
 
-All published artifacts passed a public-content review. Active personal profiles, profile history, and project-specific source material are excluded.
+The project's material checks, author position, social-prose drafting, sentence and paragraph rhythm, and parts of the checker design incorporate and adapt [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing) 1.1.0, using commit `4fda173f3fef7fb808f3eba991eeb2528ea4b189` as the reference baseline. The current version builds on that work with separate genre and voice choices, literary expression, and reader-oriented editing.
 
-## Boundaries
-
-- The checker detects textual shapes; it cannot prove that a factual claim is true.
-- The skill never fabricates experiences, people, dialogue, or exact scenes to simulate a human writer.
-- The social-longform profile removes prompting punctuation, semantic pivoting, and inflated jargon. Colons before direct speech are allowed, and ordinary Chinese patterns such as `不只……还……` are judged by what the sentence is doing rather than blocked literally. The WeChat profile additionally blocks self-authored questions and performative punchlines. Technical documents retain necessary tables, lists, code, and precise terms.
-- Profiles store transferable writing decisions, not full source articles, and do not guarantee imitation of a specific author.
-
-## Validation
-
-The public package is checked with skill structure validation, Python syntax checks, an empty-profile-store test, all three lint profiles, WeChat positive and negative fixtures, manual-tone and overly-even-paragraph warnings, minimum-length and batch-shape gates, and a clean [one-command installation smoke test](tests/smoke.sh). See [the evaluation notes](docs/evaluation.md) for evidence and limitations.
-
-## License
-
-[MIT License](LICENSE). See [NOTICE.md](NOTICE.md) for third-party attribution.
+This is an independent derivative project, not an official upstream release. It does not require imitation of the original author's fixed persona or voice. The project uses the [MIT License](LICENSE); upstream attribution and license text are retained in [NOTICE.md](NOTICE.md) and [the origin and license notice](human-doc-writing/references/human-writing-origin.md).

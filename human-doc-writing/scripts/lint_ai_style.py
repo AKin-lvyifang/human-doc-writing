@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""检查中文成稿的通用 AI 写作痕迹与社媒散文硬禁项。
+"""为中文成稿提供需要结合文风判断的编辑提醒。
 
-脚本只发现文字形状，不判断事实是否可靠，也不替代人工编辑。
+风格与提示分不阻断交付；严格模式只检查内部过程残留和显式最低篇幅。
+脚本不判断事实是否可靠，也不替代人工编辑。
 """
 
 from __future__ import annotations
@@ -26,7 +27,6 @@ class Rule:
     weight: int
     threshold: int
     advice: str
-    hard_profiles: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -37,28 +37,23 @@ class Paragraph:
     sentences: int
 
 
+PROCESS_MARKERS = re.compile(r"<!--\s*source\s*:|\[DISCARDED-[^\]\n]+\]", re.IGNORECASE)
+
+
 COMMON_RULES = (
-    Rule(
-        "过程标注残留",
-        re.compile(r"<!--\s*source:|待核实|TODO|MAT-[A-Z0-9_-]+|\[DISCARDED-[^\]]+\]"),
-        3,
-        1,
-        "删除内部来源注释、待核实标记和过程占位。",
-        PROFILES,
-    ),
     Rule(
         "文档自我定位",
         re.compile(r"文档定位|这是一份[^。\n]{0,40}(?:文档|说明|白皮书)"),
         3,
         1,
-        "正文直接进入读者问题或事实。",
+        "判断定位说明是否帮助读者；无助于理解时可直接进入问题或事实。",
     ),
     Rule(
         "模板化开头",
         re.compile(r"一句话说明|一文读懂|首先[，,]|本文将|下面(?:将|会)|在当今[^。\n]{0,30}时代|随着[^。\n]{0,30}(?:发展|进步)"),
         2,
         1,
-        "删除预告和时代背景，直接写事情、问题或结果。",
+        "背景或预告有实际导航作用时保留；只是套话时可直接写事情、问题或结果。",
     ),
     Rule(
         "解释型路标",
@@ -79,7 +74,7 @@ COMMON_RULES = (
         re.compile(r"总的来说|综上所述|最后需要说明|未来可期|让我们共同|让我们一起"),
         2,
         1,
-        "删除重复总结、宏大宣言和自动互动口播。",
+        "判断收束是否增加信息或情绪；只重复前文时可删减。",
     ),
 )
 
@@ -87,14 +82,14 @@ COMMON_RULES = (
 TRIPLE_PATTERN = re.compile(r"[\u4e00-\u9fff]{1,6}、[\u4e00-\u9fff]{1,6}、[\u4e00-\u9fff]{1,6}")
 
 
-HARD_STOPS = (
+STOCK_PHRASES = (
     "说白了",
     "说穿了",
     "先说结论",
 )
 
 
-HARD_JARGON = (
+JARGON_TERMS = (
     "赋能",
     "抓手",
     "商业闭环",
@@ -201,7 +196,7 @@ REPEATED_OPENERS = (
 )
 
 
-FORBIDDEN_PUNCTUATION = {
+PUNCTUATION_SIGNALS = {
     "：": "中文冒号",
     ":": "英文冒号",
     "—": "破折号",
@@ -316,23 +311,57 @@ def excerpt(value: str, width: int = 72) -> str:
     return clean if len(clean) <= width else clean[: width - 1] + "…"
 
 
+def masked_text(text: str) -> str:
+    return "".join("\n" if char == "\n" else " " for char in text)
+
+
+def mask_code(text: str) -> str:
+    """先屏蔽 Markdown 代码示例，保留正文和注释供内部残留检查。"""
+    lines: list[str] = []
+    fence: Optional[str] = None
+    in_comment = False
+    for line in text.splitlines(keepends=True):
+        if fence is not None:
+            lines.append(masked_text(line))
+            if re.fullmatch(r" {0,3}" + re.escape(fence[0]) + "{" + str(len(fence)) + r",}[ \t]*\r?\n?", line):
+                fence = None
+            continue
+        if in_comment:
+            lines.append(line)
+            in_comment = "-->" not in line
+            continue
+        opening = re.match(r" {0,3}(`{3,}|~{3,})", line)
+        if opening:
+            fence = opening.group(1)
+            lines.append(masked_text(line))
+        elif line.startswith(("    ", "\t")):
+            lines.append(masked_text(line))
+        else:
+            lines.append(line)
+            comment_start = line.find("<!--")
+            in_comment = comment_start >= 0 and "-->" not in line[comment_start:]
+    fenced = "".join(lines)
+    return re.sub(
+        r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)",
+        lambda match: masked_text(match.group()),
+        fenced,
+        flags=re.DOTALL,
+    )
+
+
 def mask_non_prose(text: str) -> str:
     """屏蔽代码、网址和机器元数据，同时保留字符位置与换行。"""
-
-    def mask(match: re.Match[str]) -> str:
-        return "".join("\n" if char == "\n" else " " for char in match.group())
-
     patterns = (
         re.compile(r"\A---\s*\n.*?\n---\s*(?:\n|\Z)", re.DOTALL),
-        re.compile(r"```.*?```", re.DOTALL),
-        re.compile(r"`[^`\n]*`"),
+        re.compile(r"<!--.*?(?:-->|\Z)", re.DOTALL),
+        re.compile(r"^[ ]{0,3}\[[^\]\n]+\]:[^\n]*", re.MULTILINE),
         re.compile(r"\]\([^\n)]*\)"),
         re.compile(r"https?://[^\s)>]+"),
         re.compile(r"<[^>\n]+>"),
     )
-    masked = text
+    masked = mask_code(text)
     for pattern in patterns:
-        masked = pattern.sub(mask, masked)
+        masked = pattern.sub(lambda match: masked_text(match.group()), masked)
     return masked
 
 
@@ -479,8 +508,6 @@ def metaphor_cluster(
 def add_pattern_signals(
     source: str,
     prose: str,
-    profile: str,
-    failures: list[str],
     warnings: list[str],
 ) -> int:
     score = 0
@@ -492,10 +519,7 @@ def add_pattern_signals(
         score += weighted
         lines = "、".join(str(line_number(source, match.start())) for match in matches[:8])
         message = f"[{rule.label}] {len(matches)} 处，第 {lines} 行。{rule.advice}"
-        if profile in rule.hard_profiles:
-            failures.append(message)
-        else:
-            warnings.append(message)
+        warnings.append(message)
     return score
 
 
@@ -504,15 +528,18 @@ def check(
 ) -> tuple[int, int, list[str], list[str]]:
     source = path.read_text(encoding="utf-8")
     prose = mask_non_prose(source)
-    failures: list[str] = []
+    failures = [
+        f"[过程标注残留] 第 {line_number(source, match.start())} 行。删除内部来源注释或弃稿标记。"
+        for match in PROCESS_MARKERS.finditer(mask_code(source))
+    ]
     warnings: list[str] = []
-    score = add_pattern_signals(source, prose, profile, failures, warnings)
+    score = add_pattern_signals(source, prose, warnings)
 
     total_han = han_count(prose)
     if min_han is not None and total_han < min_han:
         failures.append(
             f"[篇幅不足] 当前 {total_han} 个汉字，文档契约最低 {min_han}。"
-            "材料足够时补回过程、条件、选择和后果；材料不足时明确缩小篇幅，不重复解释。"
+            "按本篇需要补足解释、过程、条件或感受；材料不足时明确缩小篇幅，不靠空话补字数。"
         )
 
     triple_matches = list(TRIPLE_PATTERN.finditer(prose))
@@ -521,7 +548,7 @@ def check(
         lines = "、".join(str(line_number(source, match.start())) for match in triple_matches[:8])
         warnings.append(
             f"[口号式三连] {len(triple_matches)} 处，第 {lines} 行。"
-            "通用文档中的分类与字段可以保留；散文需确认三项真的同层级，不为节奏凑齐。"
+            "分类、字段和有效排比可以保留；结合语境判断是否增加理解、节奏或情绪。"
         )
 
     meta = META_HEADINGS.findall(prose)
@@ -534,7 +561,7 @@ def check(
         score += 1
         warnings.append(
             f"[短稿小标题] {total_han} 个汉字使用 {h2_count} 个二级标题。"
-            "公众号连续叙事稿先删掉标题试读；教程或确有定位需要时可以保留。"
+            "标题有助于导航或阅读节奏时保留；妨碍连续阅读时再考虑合并或删减。"
         )
 
     if profile in SOCIAL_PROFILES:
@@ -637,7 +664,8 @@ def check(
                 for match in anaphoras[:4]
             )
             warnings.append(
-                f"[同构排比] 共 {len(anaphoras)} 处。{samples}。三项以上留两项，第三项换说法或删除。"
+                f"[同构排比] 共 {len(anaphoras)} 处。{samples}。"
+                "判断重复是否推进信息、节奏或情绪；有作用时可以保留。"
             )
 
         nominalizations = all_matches(prose, NOMINALIZATION_PATTERNS)
@@ -658,7 +686,7 @@ def check(
             samples = "、".join(f"{term} {count} 次" for term, count in counts.most_common(4))
             warnings.append(
                 f"[连词过密] 每千字约 {len(conjunction_hits) * 1000 // total_han} 个。{samples}。"
-                "中文小句能靠语序和事理接上时，删掉一半试读。"
+                "连词有助于读者跟上关系时保留；只重复语序已表达的关系时可删减。"
             )
 
         lyric_matches = non_overlapping_terms(prose, LYRIC_WORDS)
@@ -667,7 +695,7 @@ def check(
             samples = "、".join(dict.fromkeys(term for _, term in lyric_matches))
             warnings.append(
                 f"[抒情词] 共 {len(lyric_matches)} 处，出现 {samples}。"
-                "写具体事物时保留，给抽象概念穿衣服时删除。"
+                "结合所选文风判断意象是否帮助感知或传情；成立时保留。"
             )
 
         highlights = bracket_highlights(prose)
@@ -688,11 +716,11 @@ def check(
             )
 
     context_matches = non_overlapping_terms(prose, CONTEXT_JARGON)
-    hard_spans = [(position, position + len(term)) for position, term in non_overlapping_terms(prose, HARD_JARGON)]
+    jargon_spans = [(position, position + len(term)) for position, term in non_overlapping_terms(prose, JARGON_TERMS)]
     context_matches = [
         (position, term)
         for position, term in context_matches
-        if not any(position < end and position + len(term) > start for start, end in hard_spans)
+        if not any(position < end and position + len(term) > start for start, end in jargon_spans)
     ]
     if context_matches:
         samples = "、".join(dict.fromkeys(term for _, term in context_matches))
@@ -706,45 +734,60 @@ def check(
         score += 1
         window, fields = metaphors
         samples = "、".join(dict.fromkeys(hit[2] for hit in window))
-        warnings.append(f"[借喻换场] 八百字内出现 {len(fields)} 套借喻，例词有 {samples}。")
+        warnings.append(
+            f"[意象语境] 八百字内出现 {len(fields)} 组词，例词有 {samples}。"
+            "可能是本义或借喻；只在意象跳换妨碍理解时调整。"
+        )
 
     if profile in SOCIAL_PROFILES:
-        for symbol, label in FORBIDDEN_PUNCTUATION.items():
+        for symbol, label in PUNCTUATION_SIGNALS.items():
             matches = list(re.finditer(re.escape(symbol), prose))
-            quote_colons: list[re.Match[str]] = []
             if symbol in ("：", ":"):
-                hard_matches: list[re.Match[str]] = []
+                context_matches: list[re.Match[str]] = []
                 for match in matches:
-                    tail = prose[match.end() : match.end() + 2].lstrip()
+                    if (
+                        match.start() > 0
+                        and match.end() < len(prose)
+                        and prose[match.start() - 1].isdigit()
+                        and prose[match.end()].isdigit()
+                    ):
+                        continue
+                    tail = prose[match.end() :].lstrip()
                     if tail[:1] in ("「", "『", "“", "‘", '"'):
-                        quote_colons.append(match)
-                    else:
-                        hard_matches.append(match)
-                matches = hard_matches
+                        continue
+                    context_matches.append(match)
+                matches = context_matches
             if matches:
                 lines = "、".join(str(line_number(source, match.start())) for match in matches[:8])
-                failures.append(f"[{label}] 共 {len(matches)} 处，第 {lines} 行。")
-            if quote_colons:
-                lines = "、".join(str(line_number(source, match.start())) for match in quote_colons[:8])
                 warnings.append(
-                    f"[引语冒号] 共 {len(quote_colons)} 处，第 {lines} 行。"
-                    "确认后面确实是人物直接原话，不是提示性标题。"
+                    f"[{label}] 共 {len(matches)} 处，第 {lines} 行。"
+                    "用于清楚表达关系或安排停顿时保留；不需要为消除提示改写引语。"
                 )
 
-        for position, phrase in non_overlapping_terms(prose, HARD_STOPS):
-            failures.append(f"[硬停词] 第 {line_number(source, position)} 行，{phrase}")
+        for position, phrase in non_overlapping_terms(prose, STOCK_PHRASES):
+            warnings.append(
+                f"[口语路标] 第 {line_number(source, position)} 行，{phrase}。"
+                "符合说话人的语气或帮助读者理解时保留。"
+            )
 
-        for position, phrase in non_overlapping_terms(prose, HARD_JARGON):
-            failures.append(f"[黑话] 第 {line_number(source, position)} 行，{phrase}")
+        for position, phrase in non_overlapping_terms(prose, JARGON_TERMS):
+            warnings.append(
+                f"[词语语境] 第 {line_number(source, position)} 行，{phrase}。"
+                "本义、引语或精确术语可以保留；只用来抬价时再改写。"
+            )
 
         for phrase in ROAD_SIGNS:
             for match in re.finditer(re.escape(phrase), prose):
-                failures.append(f"[模型路标] 第 {line_number(source, match.start())} 行，{phrase}")
+                warnings.append(
+                    f"[解释路标] 第 {line_number(source, match.start())} 行，{phrase}。"
+                    "判断是否确实提示了新的信息关系，有作用时保留。"
+                )
 
         pivot_matches = all_matches(prose, PIVOT_PATTERNS)
         for match in pivot_matches:
-            failures.append(
-                f"[翻案句] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”"
+            warnings.append(
+                f"[对比与修正] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”。"
+                "真实纠错、有效对比和引语可以保留；只在制造假误解时调整。"
             )
 
         occupied = [match.span() for match in pivot_matches]
@@ -769,29 +812,30 @@ def check(
         questions = list(re.finditer(r"[？?]", prose))
         if questions:
             lines = "、".join(str(line_number(source, match.start())) for match in questions[:8])
-            failures.append(
-                f"[公众号问号] 共 {len(questions)} 处，第 {lines} 行。"
-                "公众号非虚构正文不用问号；素材里的真实提问也改成不改变含义的间接表述。"
+            warnings.append(
+                f"[提问语境] 共 {len(questions)} 处，第 {lines} 行。"
+                "真实提问、必要设问与人物原话可以保留；只检查是否在反复制造空悬念。"
             )
 
         for match in all_matches(prose, WECHAT_PUNCHLINE_PATTERNS):
-            failures.append(
-                f"[表演性点题] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”"
+            warnings.append(
+                f"[点题语境] 第 {line_number(source, match.start())} 行，“{excerpt(match.group())}”。"
+                "确有事实、解释或情绪作用时保留。"
             )
 
     return total_han, score, failures, warnings
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="检查中文成稿、社媒散文与公众号的 AI 写作痕迹")
+    parser = argparse.ArgumentParser(description="提供中文成稿的编辑提醒；风格信号与提示分不决定通过或失败")
     parser.add_argument("path", type=Path, help="UTF-8 Markdown 或纯文本文件")
-    parser.add_argument("--profile", choices=PROFILES, default="universal", help="检查档位")
+    parser.add_argument("--profile", choices=PROFILES, default="universal", help="兼容的提醒范围，不设置文风禁令")
     parser.add_argument(
         "--min-han",
         type=int,
         help="文档契约允许的最低汉字数；只在材料已经足够时使用",
     )
-    parser.add_argument("--strict", action="store_true", help="阻断项存在或提示分达到 6 时返回失败")
+    parser.add_argument("--strict", action="store_true", help="仅内部过程残留或显式最低篇幅未满足时返回 1；风格提醒不阻断")
     args = parser.parse_args()
 
     if args.min_han is not None and args.min_han <= 0:
@@ -806,9 +850,8 @@ def main() -> int:
     except UnicodeDecodeError:
         print("文件必须是 UTF-8 编码。", file=sys.stderr)
         return 2
-
-    if total_han == 0:
-        print("没有检测到汉字。", file=sys.stderr)
+    except OSError as exc:
+        print(f"无法读取文件：{exc}", file=sys.stderr)
         return 2
 
     print(f"{args.path}: profile={args.profile}，汉字数={total_han}，提示分={score}，阻断项={len(failures)}")
@@ -819,15 +862,14 @@ def main() -> int:
             print(f"- {item}")
 
     if warnings:
-        print("\n需要人工判断")
+        print("\n编辑提醒（结合语境和所选文风判断，可以保留；提示分不影响退出状态）")
         for item in warnings:
             print(f"- {item}")
 
     if not failures and not warnings:
         print("\n未发现这份检查器覆盖的问题。仍需人工核对事实、材料、推进和人味。")
 
-    failed = bool(failures) or score >= 6
-    return 1 if args.strict and failed else 0
+    return 1 if args.strict and failures else 0
 
 
 if __name__ == "__main__":

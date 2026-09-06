@@ -2,196 +2,148 @@
 
 [English](README_EN.md) | 简体中文
 
-一个面向 Codex 的开源中文写作 Skill。它把渐进式个人写作画像、场景化文体路由和统一人味门禁放进同一套流程，覆盖公众号、小红书、知乎、博客、产品文档、教程、PRD、GitHub README 与发布说明。
+面向 Codex 的中文写作与编辑 Skill，当前版本 **2.0.0**。根据材料、读者和场合选择文体与文风，写文章、产品文档、教程、PRD、README 和发布说明，也能从样文学习个人写作偏好。
 
-它不会要求所有文章模仿同一种“活人感”。画像决定这次怎样写，统一门禁负责守住事实、材料、推进和自然中文的共同底线。
+一份通知需要让人迅速找到安排，人物小品可以在细节处停留，评论需要讲清判断依据。这个 Skill 把这些阅读需要带进取材、结构、节奏和语言选择，让文学表达用在合适的地方。
 
-## 它解决什么问题
+## 开始使用
 
-普通写作提示词经常在两个方向之间摇摆。
-
-- 只强调个人风格，容易把假经历、重复解释和模型腔一起保存下来。
-- 只强调统一去 AI 味，容易把公众号、PRD、README 和教程磨成同一种语气。
-
-`human-doc-writing` 把这两层拆开处理。
-
-1. 按读者任务识别文章类型。
-2. 读取该类型当前的正向画像与反例画像。
-3. 使用用户材料和项目事实写作。
-4. 所有成稿统一经过事实与材料门、七遍终审和文体对应的检查器。
-
-## 来源与引用
-
-本项目融合并改编了 [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing) 1.1.0 的方法，当前研究基线为提交 `4fda173f3fef7fb808f3eba991eeb2528ea4b189`。
-
-吸收的部分包括事实与材料门、作者说话位置、段落推进、中文词序、七遍改稿、人味冷读和部分自动检查思路。上游采用 MIT License，本仓库在 [NOTICE.md](NOTICE.md) 与 [来源和许可证](human-doc-writing/references/human-writing-origin.md) 中保留了完整引用。
-
-这不是卡兹克官方 Skill，也不要求模仿“数字生命卡兹克”的固定人设、口癖和尾部。本项目保留的是可迁移的写作方法，并在其外增加个人画像、类型路由、技术文档适配和长文编排。
-
-## 效果与两次纠偏
-
-融合过程曾使用三组相同材料做匿名评分，覆盖 GPT-5.6 长任务、UI Skills 总入口和个人写作系统三个议题。
-
-| 历史版本 | 三篇平均分 |
-|---|---:|
-| 独立 `human-writing` | 91.3 |
-| 第一版融合 | 88.3 |
-| v1.0 融合版 | 93.3 |
-
-发布后的逐段阅读发现，这组分数漏掉了一个重要问题。v1.0 融合版会在事实段之间加入自设问句、紧接着自答，也会插入孤立的“点题金句”和动作借喻。检查器虽然通过，读起来却比独立版刻意。独立版在前两篇里更自然，因为它直接描述事实、执行过程、原因和处理办法。
-
-v1.1 据此把公众号默认写法重新对齐独立 `human-writing` 的普通白话。读者追问只留在内部安排信息顺序；公众号非虚构正文不用问号，素材里的真实提问也改成不改变含义的间接表述；删掉后不损失事实和解释的短判断直接删除；新增 `wechat-longform` 检查档拦截自问自答和表演性点题。
-
-第二轮阅读又发现，v1.1 去掉表演性句子以后纠偏过头。三篇稿子都写成 12 段，语气安全、整齐，偏产品说明；三篇也都没有达到 brief 设定的约 1,200 汉字，必要的过程和后果被一并压短。
-
-v1.2 调整的是工作顺序。写前只加载事实与材料门；公众号和其他社媒中长文再读取独立版的正向起稿方法；详细去 AI 味规则留到初稿以后。终审先保护说话位置、普通判断和材料厚度，再清模型形状。检查器新增可选 `--min-han`、说明书口吻与段落过齐提醒；同批三篇以上稿件使用独立脚本检查段落数同构。
-
-同一版检查器重新核对三组样稿后，结果如下。
-
-| 样稿组 | 三篇汉字数 | 正文段数 | 1,200 汉字门 | 批量结构 |
-|---|---|---|---|---|
-| 历史独立版 | 1204 / 1223 / 1249 | 12 / 13 / 12 | 三篇通过 | 未发现同构 |
-| v1.1 过度纠偏稿 | 1149 / 1047 / 1167 | 12 / 12 / 12 | 三篇失败 | 命中段落数同构 |
-| v1.2 修订稿 | 1215 / 1213 / 1230 | 11 / 9 / 9 | 三篇通过 | 未发现同构 |
-
-按原量表复读，v1.2 已恢复到与独立版相当的整体水平。独立版前两篇的个别句子仍更松弛，v1.2 的第三篇则因为保留了真实失败和修改过程，明显少了方案说明感。第三篇加入了第二轮反馈，不属于严格的同材料盲测。这个结论只针对三篇回归稿，不用于声称融合版在所有题材上更好。
-
-93.3 只保留为 v1.0 的历史评分，不再用来证明融合版优于独立版。完整过程和修订样稿见 [评测说明](docs/evaluation.md) 与 [对照样稿](examples/evaluation/README.md)。
-
-## 怎么运作
-
-```mermaid
-flowchart TD
-    A[用户任务] --> B{工作模式}
-    B -->|画像灌输| C[识别文章类型]
-    C --> D[提炼可迁移写作决策]
-    D --> E[保存正向画像或反例画像]
-    B -->|写作或改稿| F[事实与材料门]
-    F --> G[类型路由、篇幅契约与当前画像]
-    G --> H[社媒长文读取正向起稿规则]
-    H --> I[先完成有材料和判断的初稿]
-    I --> J[初稿后再加载七遍人味终审]
-    J --> K[通用档或社媒严格档检查]
-    K --> L[交付成稿]
-```
-
-Skill 使用渐进式披露，不会在每次写作前把全部规则一次塞进上下文。
-
-- `SKILL.md` 只负责工作模式和总流程。
-- `references/type-router.md` 按读者任务选择文体。
-- `user/portraits/` 与 `user/anti-patterns/` 保存用户自己的当前偏好。
-- `references/types/` 只在没有个人画像时提供初始写法。
-- `references/material-gate.md` 在起稿前核对事实、材料和篇幅契约。
-- `references/natural-social-prose.md` 只负责公众号、知乎、博客等社媒长文的正向起稿。
-- `references/human-voice-gate.md` 只在初稿后负责所有文体共同的人味终审。
-- `scripts/lint_ai_style.py` 提供三个检查档和可选最低汉字数门禁；`scripts/compare_draft_shapes.py` 比较同批多稿是否套用相同骨架。
-
-## 适用场景
-
-| 场景 | Skill 会重点处理什么 |
-|---|---|
-| 公众号、知乎、博客和社媒中长文 | 材料够不够、作者凭什么说、段落是否推进、结尾是否拖沓 |
-| 小红书 | 快速价值、扫描节奏、具体动作和经验边界 |
-| 产品文档与白皮书 | 产品定位、能力边界、状态口径和读者上手路径 |
-| 教程与帮助中心 | 可执行步骤、前置条件、验证结果和故障排查 |
-| PRD | 读者决策、范围、状态、验收和不做事项 |
-| GitHub README 与 Release | 第一屏相关性、最短安装路径、兼容性和升级影响 |
-| 重写与去 AI 味 | 保留事实，删除假具体、模型路标、机械对比和重复总结 |
-| 写作画像灌输 | 从认可或反感的样文中提炼结构、节奏和取舍，不保存原文 |
-
-## 一键安装
-
-macOS 或 Linux 可以直接运行：
+macOS 或 Linux 用户可以运行：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/main/install.sh | bash
 ```
 
-脚本默认安装到 `${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing`。它不会覆盖已有目录；检测到同名 Skill 时会停止。若希望先审查脚本，请先打开 [install.sh](install.sh) 再执行。
+脚本从 `main` 安装，默认位置是 `${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing`。需要 Bash、`curl` 和 `tar`；Skill 的辅助脚本使用 Python 3 标准库，无需安装第三方 Python 包。可以先查看 [install.sh](install.sh)。
 
-也可以让 Codex 使用内置安装器：
+已有同名目录时，安装脚本会停止，不覆盖旧文件。已有用户请按下方升级说明处理。安装后新开一个 Codex 任务，确认 Skill 列表中出现 `human-doc-writing`，然后直接提供材料：
 
-```bash
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" \
-  --repo AKin-lvyifang/human-doc-writing \
-  --path human-doc-writing
+```text
+$human-doc-writing
+根据这份材料写一篇面向普通读者的公众号短评，约 800 字。
+判断清楚、有分寸，文风由你根据材料选择，直接交正文。
 ```
 
-部署到自定义 Skills 目录：
+安装到自定义 Skills 目录：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/main/install.sh \
   | bash -s -- --dest "$HOME/.agents/skills"
 ```
 
-安装后新开一个 Codex 任务，让 Skill 列表刷新。
+需要固定版本或手动安装时，到 [v2.0.0 Release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0) 下载 `human-doc-writing-2.0.0.zip` 和 `SHA256SUMS.txt`。解压后的 Skill 位于 `human-doc-writing-2.0.0/human-doc-writing/`，其中包含 `SKILL.md`。将这个内层目录放入你的 Skills 目录；不要把整个仓库目录当作 Skill 安装。
 
-## 手动部署
+## 2.0.0 怎样写作
+
+### 文体和发表平台分开判断
+
+先判断读者需要理解什么、感受什么或完成什么，再选择表达方式。公众号、小红书、知乎和博客提供阅读场合，不再单独决定文章的声音。
+
+内置九种实质文体：
+
+| 文体 | 重点 |
+|---|---|
+| 说明文 | 概念、关系、例子与适用条件 |
+| 产品文档 | 产品用途、能力边界与上手路径 |
+| 教程 | 前置条件、操作步骤、成功标志与故障处理 |
+| PRD | 目标、范围、行为规则与验收标准 |
+| GitHub README | 项目用途、最短上手路径与使用限制 |
+| GitHub Release | 用户可见变化、兼容性与升级动作 |
+| 观点评论 | 判断、依据、取舍与结论边界 |
+| 纪实叙述 | 有来源的人物、动作、关系与变化 |
+| 随笔散文 | 具体观察、联想、节奏与余味 |
+
+文体卡的必要内容始终保留。例如，有个人画像的教程仍须让读者判断操作是否成功。完整小说、虚构故事、对白和剧本不属于本 Skill 的默认创作范围。
+
+### 根据文章选择文风
+
+创作指导覆盖观察、作者位置、材料的揭示顺序、详略、叙述距离和语言节奏。说明可以明净耐心，人物稿可以温厚细腻，评论可以鲜明而有分寸。
+
+设问、比喻、排比、重复、留白和照应都可按文章需要使用；检查其作用与准确性，不把某种标点或句式一概判成 AI 腔。文学表达仍受材料约束，不能为真实人物补造心理、对白或现场细节。
+
+要求清楚时直接写，不例行发送确认卡或要求选择风格菜单。局部改稿只处理指定部分及其衔接，保留未要求改动的内容。
+
+### 从读者位置编辑
+
+编辑先保留有效的观察、声音与表达，再修理解断点、事实越界、无效重复和失去分寸的修辞。按具体问题回改，不规定固定终审遍数。段落可以承担理解、叙事、感受或阅读停顿，不要求每段都新增事实。
+
+## 写作、改稿与画像学习
+
+写作时提供材料、读者、用途和必要限制即可，普通文风选择可以交给 Skill。
+
+**局部改稿：**
+
+```text
+$human-doc-writing
+只改第二段，让第一次接触这个产品的人能读懂。
+保留其余文字，不添加原稿没有的功能。
+```
+
+**只在本次借鉴：**
+
+```text
+$human-doc-writing
+分析这篇随笔的叙述距离和节奏，本次改稿参考这种写法，不保存画像。
+```
+
+**保存一种写法：**
+
+```text
+$human-doc-writing
+学习这篇人物稿怎样选择细节、安排节奏，保存为 narrative 类型下的
+warm-observation 画像。保留已有画像，不替换默认写法。
+```
+
+一篇完整、可读的样文即可建立画像。画像记录“创作选择 → 读者效果 → 适用条件”，不把原作者的身份、经历、观点或独特句子带入新稿。只分析或本次参考时，不保存长期偏好；明确要求学习、记住或更新时才保存。
+
+同一文体可以保留多份具名画像，写作时选择最匹配的一份。旧平台画像与默认画像继续可读，但只在声明的文体、用途和场合匹配时使用。当前明确要求优先，不能把一次反馈变成所有文章的禁令。
+
+在已安装的 Skill 目录中，也可查看画像：
 
 ```bash
-git clone --depth 1 https://github.com/AKin-lvyifang/human-doc-writing.git
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-cp -R human-doc-writing/human-doc-writing "${CODEX_HOME:-$HOME/.codex}/skills/human-doc-writing"
+python3 scripts/portrait_store.py list
+python3 scripts/portrait_store.py show --type narrative --name warm-observation
 ```
 
-依赖只有 Python 3 标准库。自动检查脚本不需要第三方 Python 包。
+第二条命令适用于已保存该画像的情况。具名画像存于 `user/portraits/<type_id>/<name>.md`，反例存于 `user/anti-patterns/<type_id>/<name>.md`；旧默认画像路径继续兼容。替换或移除画像前会保留备份，具体用法见 [画像学习](human-doc-writing/references/portrait-ingestion.md)。
 
-## 使用方法
+## 检查器能做什么
 
-### 直接写作
+在 Skill 目录中，可检查一份 Markdown 或纯文本成稿：
 
-```text
-$human-doc-writing
-根据这份项目记录写一篇公众号复盘。面向正在使用 Codex 的产品经理，保留事实边界，直接执行。
+```bash
+python3 scripts/lint_ai_style.py /absolute/path/article.md --strict
 ```
 
-### 灌输正向画像
+`--strict` 仅在发现内部过程标注残留，或显式设置的最低汉字数未满足时返回失败。需要最低汉字数时加 `--min-han N`。`universal`、`social-longform`、`wechat-longform` 保留为兼容提示档位，风格提示不阻断，也不要求清零。
 
-```text
-$human-doc-writing
-这是一篇我认可的产品文档。请学习它的结构、节奏和取舍，建立产品文档画像，不要复制原文事实和句子。
-```
+多稿比较脚本 `compare_draft_shapes.py` 可提示可能共用的结构，改写比较脚本 `de_ai_diff.py` 可显示文字变化。相同段数和改写比例不代表写作质量；脚本通过也不能证明事实可信、文章自然或已有文学性。
 
-### 记录反例
+**自动流程的行为变化：** 旧命令行参数继续兼容，但风格命中和批量结构提醒不再让 `--strict` 返回失败。原先据此拒收稿件的自动流程需要调整，改由读者理解、文体要求与实际表达效果判断是否需要回改。
 
-```text
-$human-doc-writing
-这篇文章的报告腔和机械总结是我不喜欢的。把它记录为公众号反例画像。
-```
+## 从旧版升级
 
-### 清理 AI 味
+**先备份整个旧 Skill，完整保留原有 `user/`。**
 
-```text
-$human-doc-writing
-保留这份原稿的事实和立场，重写成自然中文，并说明哪些内容因材料不足被删掉。
-```
+1. 将当前 `human-doc-writing` 目录备份到 Skills 搜索目录之外，保留可恢复的完整副本。
+2. 下载并解压 [v2.0.0 发布包](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0)，用附件 `SHA256SUMS.txt` 核对下载文件。
+3. 打开解压后的 `human-doc-writing-2.0.0/human-doc-writing/`，替换旧 Skill 的所有公开文件与目录，包括 `SKILL.md`、`VERSION`、`references/`、`scripts/`、`agents/` 和 `tests/`。唯一保留的是原 `user/` 全部内容，包括偏好、画像、索引和历史；不要用发布包的用户目录覆盖它。
+4. 新开一个 Codex 任务，确认 Skill 可用，并查看原画像是否仍能列出。
 
-## 内置文体
+安装脚本不提供原地升级。公开包不预装任何人的个人画像；没有画像时，直接使用文体卡和通用创作指导。
 
-当前包含九类路由：说明文、产品文档、教程、PRD、GitHub README、GitHub Release、公众号、小红书和其他社媒中长文。
+## 进一步阅读
 
-公开仓库不预装任何人的个人画像。首次安装时使用内置类型卡；用户灌输样文后，画像会写入 Skill 内的 `user/` 目录。升级或迁移时请先保留该目录。
+- [Skill 完整说明](human-doc-writing/SKILL.md)
+- [文体与场合路由](human-doc-writing/references/type-router.md)
+- [文风选择](human-doc-writing/references/style-selection.md)与[创作方法](human-doc-writing/references/writing-craft.md)
+- [画像模板](templates/portrait-template.md)与[画像示例](templates/portrait-example.md)
+- [必要时的简短澄清](templates/brief-template.md)
 
-## 模板与示例
+[历史评测说明](docs/evaluation.md)与[历史对照样稿](examples/evaluation/README.md)保留了早期版本的探索和纠偏。那些评分、样稿和检查结果属于旧版证据，不能证明 2.0.0 的写作效果，也不能据此声称新版在所有题材上更好。
 
-- [写作画像模板](templates/portrait-template.md)
-- [写作画像示例](templates/portrait-example.md)
-- [写作确认卡模板](templates/brief-template.md)
-- [独立版与融合版对照样稿](examples/evaluation/README.md)
+## 来源与许可
 
-这些文件都经过公开内容审查。个人启用中的画像、历史版本和项目专属资料没有进入仓库。
+本项目的材料核对、作者位置、社媒起稿、句段节奏与部分检查设计，吸收并改编自 [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing) 1.1.0，参考基线提交为 `4fda173f3fef7fb808f3eba991eeb2528ea4b189`。当前版本在此基础上加入文体与文风分离、文学表达选择和读者编辑。
 
-## 边界
-
-- 检查器只能发现文字形状，不能证明事实为真。
-- Skill 不会为了“活人感”编造经历、人物、对白和精确场景。
-- 社媒严格档会清理提示性标点、翻案腔和黑话；人物直接原话前的冒号可以保留，“不只……还……”按真实修辞动作判断，不做字面零容忍。公众号档额外拦截作者自设问句和表演性点题。README、PRD 和教程保留必要的表格、列表、代码与术语。
-- 画像保存的是可迁移写作决策，不保存整篇样文，也不保证复刻某位作者。
-
-## 验证
-
-发布前执行 Skill 结构校验、Python 语法检查、画像脚本空目录测试、三个文体检查档、公众号正反例、说明书口吻、段落过齐、最低篇幅、批量同构和[一键安装冒烟测试](tests/smoke.sh)。检查命令与评测边界见 [评测说明](docs/evaluation.md)。
-
-## License
-
-[MIT License](LICENSE)。第三方引用见 [NOTICE.md](NOTICE.md)。
+这是独立衍生项目，不代表上游官方，也不要求模仿其作者的固定人设或口吻。项目采用 [MIT License](LICENSE)，上游署名和许可文本保留于 [NOTICE.md](NOTICE.md) 与 [来源和许可证](human-doc-writing/references/human-writing-origin.md)。

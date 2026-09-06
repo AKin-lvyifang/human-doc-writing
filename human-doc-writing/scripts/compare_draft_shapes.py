@@ -81,9 +81,9 @@ def read_shape(path: Path) -> DraftShape:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="比较三篇以上稿件是否套用相同段落骨架")
+    parser = argparse.ArgumentParser(description="提醒三篇以上稿件的相似段落形状；不能据此判定写作质量或同构")
     parser.add_argument("paths", nargs="+", type=Path, help="至少三份 UTF-8 Markdown 或文本稿")
-    parser.add_argument("--strict", action="store_true", help="发现批量同构信号时返回失败")
+    parser.add_argument("--strict", action="store_true", help="兼容旧命令；形状信号始终只作提醒，正常完成返回 0")
     args = parser.parse_args()
 
     if len(args.paths) < 3:
@@ -99,6 +99,9 @@ def main() -> int:
     except UnicodeDecodeError:
         print("稿件必须是 UTF-8 编码。", file=sys.stderr)
         return 2
+    except OSError as exc:
+        print(f"无法读取稿件：{exc}", file=sys.stderr)
+        return 2
 
     for shape in shapes:
         print(
@@ -111,8 +114,8 @@ def main() -> int:
     if len(paragraph_counts) == 1 and next(iter(paragraph_counts)) >= 8:
         count = next(iter(paragraph_counts))
         signals.append(
-            f"[段落数同构] {len(shapes)} 篇稿件都正好有 {count} 个正文段。"
-            "回到每篇材料比较触发点、转折位置和自然结束处；不要为了通过检查器随手拆段。"
+            f"[段落数相同] {len(shapes)} 篇稿件都正好有 {count} 个正文段。"
+            "这不证明推进骨架相同；各篇材料与表达需要合理时可以保留，不必机械拆段。"
         )
 
     if all(shape.paragraph_count >= 8 and shape.paragraph_cv < 0.16 for shape in shapes):
@@ -122,13 +125,13 @@ def main() -> int:
         )
 
     if signals:
-        print("\n需要人工复核")
+        print("\n编辑提醒（可以保留，不影响退出状态）")
         for signal in signals:
             print(f"- {signal}")
     else:
         print("\n未发现这份批量检查器覆盖的同构信号。仍需人工比较推进骨架。")
 
-    return 1 if args.strict and signals else 0
+    return 0
 
 
 if __name__ == "__main__":

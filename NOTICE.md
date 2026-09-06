@@ -5,9 +5,12 @@
 1.1.0, research baseline commit
 `4fda173f3fef7fb808f3eba991eeb2528ea4b189`.
 
-Adapted areas include the fact and material gate, speaking position, positive
-social-prose drafting, paragraph and sentence rhythm, seven-pass revision,
-human-voice review, and parts of the prose checker design. The upstream project
+Historically adapted areas include the fact and material gate, speaking position,
+positive social-prose drafting, paragraph and sentence rhythm, seven-pass revision,
+human-voice review, and parts of the prose checker design. Version 2.0.0 builds on
+these methods with context-sensitive style choices and reader-focused editing;
+fixed revision passes and blanket stylistic prohibitions are no longer required.
+The upstream project
 is licensed under the MIT License. Its
 attribution and license text are also retained in
 `human-doc-writing/references/human-writing-origin.md`.

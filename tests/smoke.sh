@@ -31,7 +31,7 @@ HUMAN_DOC_ARCHIVE_URL="file://$archive_path" \
   bash "$repo_root/install.sh" --dest "$skills_root"
 
 test -f "$target/SKILL.md"
-test "$(tr -d '\r\n' < "$target/VERSION")" = "1.2.0"
+test "$(tr -d '\r\n' < "$target/VERSION")" = "2.0.0"
 test -f "$target/agents/openai.yaml"
 test -x "$target/scripts/lint_ai_style.py"
 test -x "$target/scripts/compare_draft_shapes.py"
@@ -40,27 +40,24 @@ python3 "$target/scripts/lint_ai_style.py" \
   "$repo_root/tests/fixtures/wechat-plain-good.md" \
   --profile wechat-longform --strict >/dev/null
 
-if bad_output="$(python3 "$target/scripts/lint_ai_style.py" \
+style_output="$(python3 "$target/scripts/lint_ai_style.py" \
   "$repo_root/tests/fixtures/wechat-performative-bad.md" \
-  --profile wechat-longform --strict 2>&1)"; then
-  echo "WeChat negative fixture unexpectedly passed." >&2
-  exit 1
-fi
+  --profile wechat-longform --strict 2>&1)"
 
-case "$bad_output" in
-  *"[公众号问号]"*"[表演性点题]"*"恰好"*"[表演性点题]"*"恰恰"*) ;;
+case "$style_output" in
+  *"阻断项=0"*"[提问语境]"*"[点题语境]"*"恰好"*"[点题语境]"*"恰恰"*) ;;
   *)
-    echo "WeChat negative fixture did not trigger the expected gates." >&2
-    echo "$bad_output" >&2
+    echo "WeChat style fixture did not retain the expected advisory signals." >&2
+    echo "$style_output" >&2
     exit 1
     ;;
 esac
 
 manual_output="$(python3 "$target/scripts/lint_ai_style.py" \
   "$repo_root/tests/fixtures/wechat-manual-bad.md" \
-  --profile wechat-longform 2>&1)"
+  --profile wechat-longform --strict 2>&1)"
 case "$manual_output" in
-  *"[说明书口吻]"*) ;;
+  *"阻断项=0"*"[说明书口吻]"*) ;;
   *)
     echo "Manual-tone fixture did not trigger the expected warning." >&2
     echo "$manual_output" >&2
@@ -70,9 +67,9 @@ esac
 
 even_output="$(python3 "$target/scripts/lint_ai_style.py" \
   "$repo_root/tests/fixtures/wechat-even-bad.md" \
-  --profile wechat-longform 2>&1)"
+  --profile wechat-longform --strict 2>&1)"
 case "$even_output" in
-  *"[段落过齐]"*) ;;
+  *"阻断项=0"*"[段落过齐]"*) ;;
   *)
     echo "Even-paragraph fixture did not trigger the expected warning." >&2
     echo "$even_output" >&2
@@ -85,7 +82,10 @@ if length_output="$(python3 "$target/scripts/lint_ai_style.py" \
   --profile wechat-longform --min-han 1200 --strict 2>&1)"; then
   echo "Minimum-length fixture unexpectedly passed." >&2
   exit 1
+else
+  length_status=$?
 fi
+test "$length_status" -eq 1
 case "$length_output" in
   *"[篇幅不足]"*) ;;
   *)
@@ -95,18 +95,37 @@ case "$length_output" in
     ;;
 esac
 
-if batch_output="$(python3 "$target/scripts/compare_draft_shapes.py" \
+cat > "$smoke_tmp/internal-process.md" <<'EOF'
+这是需要交付的正文。
+<!-- source: 内部来源说明 -->
+EOF
+
+if process_output="$(python3 "$target/scripts/lint_ai_style.py" \
+  "$smoke_tmp/internal-process.md" --strict 2>&1)"; then
+  echo "Internal-process fixture unexpectedly passed." >&2
+  exit 1
+else
+  process_status=$?
+fi
+test "$process_status" -eq 1
+case "$process_output" in
+  *"[过程标注残留]"*) ;;
+  *)
+    echo "Internal-process fixture did not trigger the expected gate." >&2
+    echo "$process_output" >&2
+    exit 1
+    ;;
+esac
+
+batch_output="$(python3 "$target/scripts/compare_draft_shapes.py" \
   "$repo_root/tests/fixtures/batch-shape-a.md" \
   "$repo_root/tests/fixtures/batch-shape-b.md" \
   "$repo_root/tests/fixtures/batch-shape-c.md" \
-  --strict 2>&1)"; then
-  echo "Batch-shape negative fixtures unexpectedly passed." >&2
-  exit 1
-fi
+  --strict 2>&1)"
 case "$batch_output" in
-  *"[段落数同构]"*) ;;
+  *"不影响退出状态"*"[段落数相同]"*) ;;
   *)
-    echo "Batch-shape fixtures did not trigger the expected gate." >&2
+    echo "Batch-shape fixtures did not retain the expected advisory signal." >&2
     echo "$batch_output" >&2
     exit 1
     ;;
