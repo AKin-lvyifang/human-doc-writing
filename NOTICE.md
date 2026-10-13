@@ -19,3 +19,15 @@ This repository is an independent derivative project. It does not claim to be
 the official KKKKhazix skill, does not imitate the author's fixed persona, and
 does not redistribute upstream example characters, stories, or signature
 phrasing.
+
+## oil-tone
+
+Some guidance on natural Chinese phrasing, sufficient explanation in the body,
+evidence for title claims, and optional structural checks incorporates and adapts
+[oil-oil/oil-tone](https://github.com/oil-oil/oil-tone), research baseline commit
+`39cbf92f76c90b7bb27a5b5d4ed88a1fc5fa31f6`.
+
+Copyright (c) 2026 oil-oil. The upstream project is licensed under the MIT
+License. Its full copyright, permission notice, and disclaimer are retained in
+[the oil-tone origin notice](human-doc-writing/references/oil-tone-origin.md),
+which is included with the Skill. The upstream checker is not redistributed.

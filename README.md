@@ -146,4 +146,6 @@ python3 scripts/lint_ai_style.py /absolute/path/article.md --strict
 
 本项目的材料核对、作者位置、社媒起稿、句段节奏与部分检查设计，吸收并改编自 [KKKKhazix/human-writing](https://github.com/KKKKhazix/human-writing) 1.1.0，参考基线提交为 `4fda173f3fef7fb808f3eba991eeb2528ea4b189`。当前版本在此基础上加入文体与文风分离、文学表达选择和读者编辑。
 
+自然中文、正文解释、标题依据和可选结构抽查的部分方法吸收并改编自 [oil-oil/oil-tone](https://github.com/oil-oil/oil-tone)，参考基线提交为 `39cbf92f76c90b7bb27a5b5d4ed88a1fc5fa31f6`。这些方法融入已有写作与编辑流程，按文体选用；来源、适用边界与完整 MIT 许可见 [oil-tone 来源说明](human-doc-writing/references/oil-tone-origin.md)。
+
 这是独立衍生项目，不代表上游官方，也不要求模仿其作者的固定人设或口吻。项目采用 [MIT License](LICENSE)，上游署名和许可文本保留于 [NOTICE.md](NOTICE.md) 与 [来源和许可证](human-doc-writing/references/human-writing-origin.md)。

@@ -646,7 +646,12 @@ def check(
             f"第 {line_number(source, match.start())} 行“{excerpt(match.group(), 44)}”"
             for match in dense_de[:4]
         )
-        warnings.append(f"[重定语句] {len(dense_de)} 句含四个以上的“的”。{samples}")
+        warnings.append(
+            f"[重定语句] {len(dense_de)} 句含四个以上的“的”。"
+            "检查多层修饰是否让主干难找；必要时调整语序、拆开关系，"
+            "不按数量删除承担语法作用的“的”，读来清楚时保留。"
+            f"{samples}"
+        )
 
     marker_matches = non_overlapping_terms(prose, SOFT_MARKERS)
     marker_limit = max(2, han_count(prose) // 900)
