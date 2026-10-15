@@ -2,7 +2,7 @@
 
 [English](README_EN.md) | 简体中文
 
-面向 Codex 的中文写作与编辑 Skill，当前版本 **2.0.0**。根据材料、读者和场合选择文体与文风，写文章、产品文档、教程、PRD、README 和发布说明，也能从样文学习个人写作偏好。
+面向 Codex 的中文写作与编辑 Skill，当前版本 **2.1.0**。根据材料、读者和场合选择文体与文风，写文章、产品文档、教程、PRD、README 和发布说明，也能从样文学习个人写作偏好。
 
 一份通知需要让人迅速找到安排，人物小品可以在细节处停留，评论需要讲清判断依据。这个 Skill 把这些阅读需要带进取材、结构、节奏和语言选择，让文学表达用在合适的地方。
 
@@ -31,9 +31,19 @@ curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/mai
   | bash -s -- --dest "$HOME/.agents/skills"
 ```
 
-需要固定版本或手动安装时，到 [v2.0.0 Release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0) 下载 `human-doc-writing-2.0.0.zip` 和 `SHA256SUMS.txt`。解压后的 Skill 位于 `human-doc-writing-2.0.0/human-doc-writing/`，其中包含 `SKILL.md`。将这个内层目录放入你的 Skills 目录；不要把整个仓库目录当作 Skill 安装。
+需要固定版本或手动安装时，到 [v2.1.0 Release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.1.0) 下载 `human-doc-writing-2.1.0.zip` 和 `SHA256SUMS.txt`。解压后的 Skill 位于 `human-doc-writing-2.1.0/human-doc-writing/`，其中包含 `SKILL.md`。将这个内层目录放入你的 Skills 目录；不要把整个仓库目录当作 Skill 安装。
 
-## 2.0.0 怎样写作
+## 2.1.0 更新：少一点 AI 腔
+
+2.0.0 把很多硬规则换成了“按场合判断”，实际写出来仍容易落回模型习惯的腔调。2.1.0 补了三件事：
+
+- **AI 腔对照表**（[`references/ai-tone-table.md`](human-doc-writing/references/ai-tone-table.md)）：21 条常见写法，如“不是 X，而是 Y”、三连排比、金句收尾、设问自答、抽象名词当主语、把几件事塞进一个大段，每条附改写方向。对所有文体默认生效，用户明确要求某种写法时才放开。
+- **交稿前必做一轮去 AI 腔改写**：按对照表扫全文，再挑出最像 AI 的 5 句逐句重写，最后检查段落密度。不再允许“自觉没问题”就跳过。
+- **用户原话样本**：可在 `user/voice-samples.md` 放几段自己亲手写的文字，写作时用来校准语感。公开包不含任何人的样本，没有这个文件时照常工作。
+
+本地两轮新旧盲比（一篇公众号、一篇随笔）中，作者两次都选了 2.1.0 的稿子。样本很小，只能说明方向。
+
+## 怎样写作
 
 ### 文体和发表平台分开判断
 
@@ -126,8 +136,8 @@ python3 scripts/lint_ai_style.py /absolute/path/article.md --strict
 **先备份整个旧 Skill，完整保留原有 `user/`。**
 
 1. 将当前 `human-doc-writing` 目录备份到 Skills 搜索目录之外，保留可恢复的完整副本。
-2. 下载并解压 [v2.0.0 发布包](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0)，用附件 `SHA256SUMS.txt` 核对下载文件。
-3. 打开解压后的 `human-doc-writing-2.0.0/human-doc-writing/`，替换旧 Skill 的所有公开文件与目录，包括 `SKILL.md`、`VERSION`、`references/`、`scripts/`、`agents/` 和 `tests/`。唯一保留的是原 `user/` 全部内容，包括偏好、画像、索引和历史；不要用发布包的用户目录覆盖它。
+2. 下载并解压 [v2.1.0 发布包](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.1.0)，用附件 `SHA256SUMS.txt` 核对下载文件。
+3. 打开解压后的 `human-doc-writing-2.1.0/human-doc-writing/`，替换旧 Skill 的所有公开文件与目录，包括 `SKILL.md`、`VERSION`、`references/`、`scripts/`、`agents/` 和 `tests/`。唯一保留的是原 `user/` 全部内容，包括偏好、画像、索引和历史；不要用发布包的用户目录覆盖它。
 4. 新开一个 Codex 任务，确认 Skill 可用，并查看原画像是否仍能列出。
 
 安装脚本不提供原地升级。公开包不预装任何人的个人画像；没有画像时，直接使用文体卡和通用创作指导。

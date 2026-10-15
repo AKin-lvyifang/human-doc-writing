@@ -2,7 +2,7 @@
 
 English | [简体中文](README.md)
 
-A Chinese writing and editing skill for Codex, currently **2.0.0**. It chooses genre and voice from the material, audience, and occasion. Use it for articles, product documentation, tutorials, PRDs, READMEs, and release notes, or teach it your writing preferences through sample texts.
+A Chinese writing and editing skill for Codex, currently **2.1.0**. It chooses genre and voice from the material, audience, and occasion. Use it for articles, product documentation, tutorials, PRDs, READMEs, and release notes, or teach it your writing preferences through sample texts.
 
 A notice should make arrangements easy to find. A character sketch can linger on a detail. A commentary needs a clear basis for its judgment. This skill brings those reader needs into the selection of material, structure, pacing, and language, using literary expression where it serves the piece.
 
@@ -32,9 +32,19 @@ curl -fsSL https://raw.githubusercontent.com/AKin-lvyifang/human-doc-writing/mai
   | bash -s -- --dest "$HOME/.agents/skills"
 ```
 
-For a fixed version or manual installation, download `human-doc-writing-2.0.0.zip` and `SHA256SUMS.txt` from the [v2.0.0 release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0). The extracted skill is at `human-doc-writing-2.0.0/human-doc-writing/`, containing `SKILL.md`. Place that inner directory in your skills directory. Install the skill subdirectory, not the entire repository.
+For a fixed version or manual installation, download `human-doc-writing-2.1.0.zip` and `SHA256SUMS.txt` from the [v2.1.0 release](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.1.0). The extracted skill is at `human-doc-writing-2.1.0/human-doc-writing/`, containing `SKILL.md`. Place that inner directory in your skills directory. Install the skill subdirectory, not the entire repository.
 
-## How 2.0.0 approaches writing
+## What's new in 2.1.0: less AI tone
+
+2.0.0 replaced many hard rules with case-by-case judgment, and drafts still tended to drift back to the model's default voice. 2.1.0 adds three things:
+
+- **AI-tone table** ([`references/ai-tone-table.md`](human-doc-writing/references/ai-tone-table.md)): 21 common patterns, such as "not X but Y", triple parallelism, aphorism endings, self-answered questions, abstract nouns as subjects, and cramming several topics into one paragraph, each with a rewrite direction. It applies to every genre by default and is relaxed only when the user explicitly asks for a pattern.
+- **A mandatory de-AI pass before delivery**: scan against the table, rewrite the five most AI-sounding sentences, then check paragraph density. "It already looks fine" is no longer a reason to skip it.
+- **User voice samples**: put a few passages you wrote yourself in `user/voice-samples.md` to calibrate voice. The public package ships no one's samples and works without the file.
+
+In two local blind comparisons (one WeChat article, one personal essay), the author picked the 2.1.0 draft both times. The sample is small and only shows a direction.
+
+## How the skill approaches writing
 
 ### Genre and publishing platform are separate choices
 
@@ -129,8 +139,8 @@ python3 scripts/lint_ai_style.py /absolute/path/article.md --strict
 **Back up the entire old skill and preserve its complete `user/` directory.**
 
 1. Copy the current `human-doc-writing` directory to a backup location outside the directories searched for skills. Keep this complete copy for recovery.
-2. Download and extract the [v2.0.0 release package](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.0.0), checking the download against the attached `SHA256SUMS.txt`.
-3. Open the extracted `human-doc-writing-2.0.0/human-doc-writing/` directory and replace all public files and directories in the old skill, including `SKILL.md`, `VERSION`, `references/`, `scripts/`, `agents/`, and `tests/`. The sole exception is the complete existing `user/`, including preferences, profiles, the index, and history. Do not overwrite it with the package's user directory.
+2. Download and extract the [v2.1.0 release package](https://github.com/AKin-lvyifang/human-doc-writing/releases/tag/v2.1.0), checking the download against the attached `SHA256SUMS.txt`.
+3. Open the extracted `human-doc-writing-2.1.0/human-doc-writing/` directory and replace all public files and directories in the old skill, including `SKILL.md`, `VERSION`, `references/`, `scripts/`, `agents/`, and `tests/`. The sole exception is the complete existing `user/`, including preferences, profiles, the index, and history. Do not overwrite it with the package's user directory.
 4. Start a new Codex task, confirm that the skill is available, and check that your existing profiles can still be listed.
 
 The installer does not perform in-place upgrades. The public package includes no active personal profiles. Without a profile, the skill uses genre cards and general writing guidance directly.

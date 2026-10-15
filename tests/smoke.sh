@@ -31,7 +31,7 @@ HUMAN_DOC_ARCHIVE_URL="file://$archive_path" \
   bash "$repo_root/install.sh" --dest "$skills_root"
 
 test -f "$target/SKILL.md"
-test "$(tr -d '\r\n' < "$target/VERSION")" = "2.0.0"
+test "$(tr -d '\r\n' < "$target/VERSION")" = "2.1.0"
 test -f "$target/agents/openai.yaml"
 test -x "$target/scripts/lint_ai_style.py"
 test -x "$target/scripts/compare_draft_shapes.py"
